@@ -1,0 +1,18 @@
+✅ Dry run successful: rel=torch.Size([32, 64, 128260]), ent=torch.Size([32, 64, 128260])
+⚠️ Local file not found, falling back to HF 'math_qa' dataset
+Traceback (most recent call last):
+  File "C:\Users\joses\Desktop\OMR_LLM\train.py", line 130, in <module>
+    ds = MathGraphDataset(
+         ^^^^^^^^^^^^^^^^^
+  File "C:\Users\joses\Desktop\OMR_LLM\dataloader.py", line 13, in __init__
+    with open(path, 'r') as f:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/mathqa_train.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\joses\Desktop\OMR_LLM\train.py", line 140, in <module>
+    raw = load_dataset('math_qa', 'all', split='train', trust_remote_code=True)
+          ^^^^^^^^^^^^
+NameError: name 'load_dataset' is not defined
