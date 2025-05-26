@@ -1,0 +1,1 @@
+[{"question_text": "How many ways to answer 4 questions with 5 choices each?", "graph": {"nodes": [{"type": "const", "value": 5}, {"type": "const", "value": 4}], "edges": [{"op": "power", "inputs": [0, 1], "output": 2}]}}]
