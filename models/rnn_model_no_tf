@@ -1,0 +1,21 @@
+import torch
+from torch import nn
+from models.base import BaseModel
+
+class EncoderDecoderRNNnoTF(BaseModel):
+    def __init__(self, src_vocab_size, embed_dim, hidden_dim, num_layers, relation_vocab_size, entity_vocab_size):
+        super().__init__(hidden_dim*2, relation_vocab_size, entity_vocab_size)
+        self.src_embed = nn.Embedding(src_vocab_size, embed_dim)
+        self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers, batch_first=True, bidirectional=True)
+        self.decoder = nn.LSTM(embed_dim, hidden_dim*2, num_layers, batch_first=True)
+        self.attn = nn.MultiheadAttention(hidden_dim*2, num_heads=8)
+
+    def forward(self, input_ids, attention_mask, labels=None):
+        src_emb = self.src_embed(input_ids)
+        enc_out, _ = self.encoder(src_emb)
+        # placeholder decoder logic
+        dec_hidden = enc_out
+
+        rel_logits = self.relation_head(dec_hidden)
+        ent_logits = self.entity_head(dec_hidden)
+        return rel_logits, ent_logits
