@@ -273,8 +273,9 @@ if __name__ == '__main__':
 
         # end of epoch: validation
         model.eval()
-        val_loss, val_acc = evaluate(model, val_loader, tokenizer, device, use_teacher)
-        val_bleu = compute_bleu(model, val_loader, tokenizer, device, use_teacher)
+        val_loss, val_acc = evaluate(model, val_loader, device, criterion, use_teacher)
+       
+        val_bleu    = compute_bleu(model, val_loader, device, use_teacher)
         wandb.log({
             'Loss/val': val_loss,
             'Acc/val': val_acc,
