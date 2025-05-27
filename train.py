@@ -1,5 +1,6 @@
 import os
 import json
+import argparse
 
 import torch
 from torch import nn, optim
@@ -16,11 +17,14 @@ from tqdm import tqdm
 from dataloader import MathGraphDataset
 from models.base import BaseModel
 from models.rnn_model import EncoderDecoderRNN
+from models.rnn_model_no_tf import EncoderDecoderRNNnoTF
+
+ACCUM_STEPS  = int(os.getenv("ACCUM_STEPS",  1))
 
 # Configuration
 config = {
     'project': 'MathQA-Graph-Translator-teacher_forcing_RNN',
-    'bs': 32,
+    'bs': int(os.getenv("BATCH_SIZE", 32)),
     'lr': 1e-3,
     'weight_decay': 1e-5,
     'embed_dim': 256,
@@ -31,6 +35,11 @@ config = {
     'max_tgt_len': 64
 
 }
+# Argument parsing for teacher-forcing vs normal RNN
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--no-teacher', action='store_true', help='Disable teacher forcing')
+    return parser.parse_args()
 
 
 def dry_run(model_cls, config, device=None):
@@ -63,29 +72,32 @@ def dry_run(model_cls, config, device=None):
         rel_logits, ent_logits = model(
             input_ids,
             attention_mask,
-            decoder_input_ids=decoder_input_ids
+            decoder_input_ids
         )
 
     assert rel_logits.shape == (batch_size, tgt_len, vocab_size)
     assert ent_logits.shape == (batch_size, tgt_len, vocab_size)
     print(f"Dry run: rel={rel_logits.shape}, ent={ent_logits.shape}")
 
-def evaluate(model, loader, tokenizer, device):
+def evaluate(model, loader, device, criterion, use_teacher):
     model.eval()
     total_loss, total_correct, total_tokens = 0.0, 0, 0
-    criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id, reduction='sum')
     with torch.no_grad():
         for batch in loader:
             ids = batch['input_ids'].to(device)
             att = batch['attention_mask'].to(device)
             labels = batch['relation_labels'].to(device)
-            # use teacher-forcing path by passing labels as decoder_input_ids
-            decoder_input = torch.full_like(labels, SOS_ID)
-            decoder_input[:,1:] = labels[:,:-1]
-            logits, _ = model(ids, att, decoder_input)
-            b, t, v = logits.size()
-            loss = criterion(logits.view(-1, v), labels.view(-1))
-            preds = logits.argmax(dim=-1)
+
+            if use_teacher:
+                decoder_input = torch.full_like(labels, SOS_ID)
+                decoder_input[:,1:] = labels[:,:-1]
+                rel_logits, _ = model(ids, att, decoder_input)
+            else:
+                rel_logits, _ = model(ids, att)
+
+            b, t, v = rel_logits.size()
+            loss = criterion(rel_logits.view(-1, v), labels.view(-1))
+            preds = rel_logits.argmax(dim=-1)
             mask = labels != tokenizer.pad_token_id
             total_loss += loss.item()
             total_correct += preds.masked_select(mask).eq(labels.masked_select(mask)).sum().item()
@@ -93,40 +105,48 @@ def evaluate(model, loader, tokenizer, device):
     return total_loss/total_tokens, total_correct/total_tokens
 
 
-def compute_bleu(model, loader, tokenizer, device):
+def compute_bleu(model, loader, device, use_teacher):
     model.eval()
     candidates, references = [], []
-
     with torch.no_grad():
         for batch in loader:
-            ids     = batch['input_ids'].to(device)
-            att     = batch['attention_mask'].to(device)
-            labels  = batch['relation_labels'].to(device)
+            ids    = batch['input_ids'].to(device)
+            att    = batch['attention_mask'].to(device)
+            labels = batch['relation_labels'].to(device)
 
-            # prepare decoder inputs (teacher forcing)
-            decoder_input = torch.full_like(labels, SOS_ID)
-            decoder_input[:,1:] = labels[:,:-1]
+            if use_teacher:
+                decoder_input = torch.full_like(labels, SOS_ID)
+                decoder_input[:,1:] = labels[:,:-1]
+                rel_logits, _ = model(ids, att, decoder_input)
+            else:
+                rel_logits, _ = model(ids, att)
 
-            rel_logits, _ = model(ids, att, decoder_input)
             preds = rel_logits.argmax(dim=-1)
-
             for i in range(preds.size(0)):
                 cand_str = tokenizer.decode(preds[i].tolist(), skip_special_tokens=True)
                 ref_str  = tokenizer.decode(labels[i].tolist(), skip_special_tokens=True)
                 candidates.append(cand_str)
                 references.append([ref_str])
-
-    # try 4-gram, fallback to unigram if too short
     try:
         return bleu_score(candidates, references, n_gram=4)
     except ValueError:
         return bleu_score(candidates, references, n_gram=1)
 
 
+
 if __name__ == '__main__':
+    cpus = int(os.getenv('SLURM_CPUS_PER_TASK', 2))
+    print(f"Using {cpus} DataLoader workers")
+    
+    args = parse_args()
+    use_teacher = not args.no_teacher
+    
+    run_suffix = 'RNN_TF' if use_teacher else 'RNN_No_TF'
+    run_name = f"{config['project']}_{run_suffix}"
+
     # 1) Initialize W&B
     wandb.login()
-    wandb.init(project=config['project'], config=config)
+    wandb.init(project=config['project'],name=run_name, config=config)
 
     # 2) Tokenizer setup
     tokenizer = AutoTokenizer.from_pretrained(
@@ -139,9 +159,10 @@ if __name__ == '__main__':
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.pad_token_id = tokenizer.eos_token_id
     SOS_ID = tokenizer.bos_token_id
+    model_cls = EncoderDecoderRNN if use_teacher else EncoderDecoderRNNnoTF
 
     # 3) Dry-run
-    dry_run(EncoderDecoderRNN, config)
+    dry_run(model_cls, config)
 
     # 4) Data loading (with fallback)
     data_path = 'data/MathQA/train.json'
@@ -156,18 +177,23 @@ if __name__ == '__main__':
     )
 
     val_split = int(0.1 * len(ds))
-    train_loader = torch.utils.data.DataLoader(
-        torch.utils.data.Subset(ds, list(range(val_split, len(ds)))),
-        batch_size=config['bs'], shuffle=True
-    )
-    val_loader = torch.utils.data.DataLoader(
-        torch.utils.data.Subset(ds, list(range(val_split))),
-        batch_size=config['bs'], shuffle=False
-    )
+    train_loader = DataLoader(
+    Subset(ds, list(range(val_split, len(ds)))),
+    batch_size=config['bs'], shuffle=True,
+    num_workers=cpus,
+    pin_memory=True,
+)
+
+    val_loader = DataLoader(
+    Subset(ds, list(range(val_split))),
+    batch_size=config['bs'], shuffle=False,
+    num_workers=max(1, cpus//2),
+    pin_memory=True,
+)
 
     # 5) Model, optimizer, scheduler
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = EncoderDecoderRNN(
+    model = model_cls(
         src_vocab_size=len(tokenizer),
         embed_dim=config['embed_dim'],
         hidden_dim=config['hidden_dim'],
@@ -187,12 +213,14 @@ if __name__ == '__main__':
     linear_scheduler = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
     cosine_scheduler = CosineAnnealingLR(optimizer, T_max=config['max_epochs'] - warmup_epochs, eta_min=1e-5)
     scheduler = SequentialLR(optimizer, schedulers=[linear_scheduler, cosine_scheduler], milestones=[warmup_epochs])
+    criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id, reduction='sum')
 
     # Training loop with teacher forcing and step-level logs
     num_steps = config['max_epochs'] * len(train_loader)
-    iteration = 0
     pbar = tqdm(total=num_steps, desc='Training Iterations', unit='batch')
     best_val_loss = float('inf')
+    optimizer.zero_grad()
+    iteration = 0
 
     for epoch in range(1, config['max_epochs'] + 1):
         model.train()
@@ -203,23 +231,32 @@ if __name__ == '__main__':
             input_ids = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
             rel_labels = batch['relation_labels'].to(device)
-
-            # prepare decoder inputs (shifted right with SOS)
-            decoder_input_ids = torch.full(
+            
+            if use_teacher:
+                # prepare decoder inputs (shifted right with SOS)
+                decoder_input = torch.full(
                 (rel_labels.size(0), config['max_tgt_len']),
                 SOS_ID, dtype=torch.long, device=device
-            )
-            decoder_input_ids[:,1:] = rel_labels[:,:-1]
+                )
+                decoder_input[:,1:] = rel_labels[:,:-1]
+                rel_logits, _ = model(input_ids, attention_mask, decoder_input)
+            else:
+                rel_logits, _ = model(input_ids, attention_mask)
 
-            optimizer.zero_grad()
-            rel_logits, _ = model(input_ids, attention_mask, decoder_input_ids)
+            # compute token-level loss        
+            loss = criterion(rel_logits.view(-1, rel_logits.size(-1)), rel_labels.view(-1))
+            
+             # scale the loss and backprop
+            (loss / ACCUM_STEPS).backward()
+            iteration += 1
 
-            # compute token-level loss
-            b, t, v = rel_logits.size()
-            criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id, reduction='sum')
-            loss = criterion(rel_logits.view(-1, v), rel_labels.view(-1))
-            loss.backward()
-            optimizer.step()
+            # only step & zero once every ACCUM_STEPS micro‐batches
+            if iteration % ACCUM_STEPS == 0:
+                optimizer.step()
+                scheduler.step()
+                optimizer.zero_grad()
+
+            
 
             # accuracy
             preds = rel_logits.argmax(dim=-1)
@@ -231,20 +268,20 @@ if __name__ == '__main__':
                 'Loss/train': loss.item() / mask.sum().item(),
                 'Acc/train': acc.item(),
             }, step=iteration)
-
-            iteration += 1
-            scheduler.step()
+            
             pbar.update(1)
 
         # end of epoch: validation
         model.eval()
-        val_loss, val_acc = evaluate(model, val_loader, tokenizer, device)
-        val_bleu = compute_bleu(model, val_loader, tokenizer, device)
+        val_loss, val_acc = evaluate(model, val_loader, tokenizer, device, use_teacher)
+        val_bleu = compute_bleu(model, val_loader, tokenizer, device, use_teacher)
         wandb.log({
             'Loss/val': val_loss,
             'Acc/val': val_acc,
             'BLEU/val': val_bleu,
+            'Epoch': epoch,
         }, step=iteration)
+        print(f"Finished epoch {epoch} — val_loss={val_loss:.4f}, val_acc={val_acc:.4f}")
 
         # checkpoint
         if val_loss < best_val_loss:
@@ -253,9 +290,9 @@ if __name__ == '__main__':
             torch.save(model.state_dict(), ckpt_path)
             print(f"Saved best model at epoch {epoch} (val_loss={val_loss:.4f})")
 
-        pbar.close()
 
     wandb.finish()
+    pbar.close()
 
 
     
