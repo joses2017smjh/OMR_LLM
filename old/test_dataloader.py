@@ -2,7 +2,9 @@ import os
 import json
 import torch
 from datasets import load_dataset
+
 dirs = ['tests']
+
 for d in dirs:
     os.makedirs(d, exist_ok=True)
 

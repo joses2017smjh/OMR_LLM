@@ -5,9 +5,12 @@ from models.base import BaseModel
 class EncoderDecoderRNN(BaseModel):
     def __init__(self, src_vocab_size, embed_dim, hidden_dim, num_layers,
                  relation_vocab_size, entity_vocab_size):
+        
         super().__init__(hidden_dim*2, relation_vocab_size, entity_vocab_size)
+        
         self.src_embed = nn.Embedding(src_vocab_size, embed_dim)
         self.encoder = nn.LSTM(embed_dim, hidden_dim, num_layers, batch_first=True, bidirectional=True)
+        
         # decoder now takes embed_dim inputs, hidden size = hidden_dim*2
         self.decoder = nn.LSTM(embed_dim, hidden_dim*2, num_layers, batch_first=True)
         self.attn = nn.MultiheadAttention(hidden_dim*2, num_heads=8)

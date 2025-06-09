@@ -101,5 +101,3 @@ class MathGraphDataset(Dataset):
             "relation_labels": rel_labels,
             "entity_labels":   ent_labels,
     }
-
-    

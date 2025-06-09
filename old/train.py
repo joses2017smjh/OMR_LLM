@@ -1,65 +1,113 @@
+import os
+import json
+import argparse
+
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, Subset
-from torcheval.metrics.functional import bleu_score
-from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
-
 from transformers import AutoTokenizer
 import wandb
+from torcheval.metrics.functional import bleu_score
+from datasets import load_dataset
+from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 from tqdm import tqdm
 
+
 import random
-import os
-import argparse
 
-from data.MathQA import MathQA
-from models.EncoderDecoderRNN import EncoderDecoderRNN
-
+from dataloader import MathGraphDataset
+from models.base import BaseModel
+from models.rnn_model import EncoderDecoderRNN
+#from models.rnn_model_no_tf import EncoderDecoderRNNnoTF
 
 ACCUM_STEPS  = int(os.getenv("ACCUM_STEPS",  1))
 
 init_tf_ratio = 1.0
 
-# training configuration
+# Configuration
 config = {
-    'model': 'rnn',
-    'bs': 32,
+    'project': 'MathQA-Graph-Translator-teacher_forcing_RNN',
+    'bs': int(os.getenv("BATCH_SIZE", 32)),
     'lr': 1e-3,
     'weight_decay': 1e-5,
     'embed_dim': 256,
     'hidden_dim': 512,
     'num_layers': 2,
     'max_epochs': 20,
-    'max_src_len': 128,
-    'max_tgt_len': 128
+    'max_src_len': 64,
+    'max_tgt_len': 64
+
 }
 
 
-def dry_run(model, device):
 
-    B = config["bs"]
-    L_src = 100
-    L_trg = 200
-    V_src = 1000
-    V_trg = 2000
+# Argument parsing for teacher-forcing vs normal RNN
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--no-teacher', action='store_true', help='Disable teacher forcing')
+    return parser.parse_args()
 
-    src = torch.randint(0, V_src, (B, L_src)).to(device)
-    trg = torch.randint(0, V_trg, (B, L_trg)).to(device)
-    out = model(src, trg)
+def generate_strict(model, input_ids, attention_mask, max_steps):
+    model.eval()
+    B = input_ids.size(0)
+    decoder = torch.full((B,1), SOS_ID, device=input_ids.device)
+    outputs = [[] for _ in range(B)]
+    with torch.no_grad():
+        for t in range(max_steps):
+            rlog, elog = model(input_ids, attention_mask, decoder)
+            if t % 3 == 0:
+                # mask out non-op positions
+                logits = torch.full_like(rlog[:, -1], float('-inf'))
+                logits[:, :relation_vocab_size] = rlog[:, -1][:, :relation_vocab_size]
+            else:
+                # mask out op‐positions, keep only full‐vocab
+                logits = torch.full_like(elog[:, -1], float('-inf'))
+                logits[:, relation_vocab_size:] = elog[:, -1][:, relation_vocab_size:]
+            nxt = logits.argmax(dim=-1, keepdim=True)
+            decoder = torch.cat([decoder, nxt], dim=1)
+            for i in range(B):
+                token_id = nxt[i].item()
+                if token_id == tokenizer.eos_token_id:
+                    # pad the rest so outputs[i] is length max_steps
+                    outputs[i].extend([tokenizer.pad_token_id]*(max_steps - len(outputs[i])))
+                    break
+                outputs[i].append(token_id)
+        return outputs
 
-    print(out.shape())
-
-    #loss = out.sum()
-    #loss.backward()
-    
-    #assert out.shape == (B, L, V), "[FAILED] dry fit to check shapes work for a dummy input."
-    #print("[Passed] Dry fit to check shapes work for a dummy input.")
 
 
 
+def dry_run(model_cls, config, relation_vocab_size, entity_vocab_size, device=None):
+    """
+    Quick sanity check: runs a batch of synthetic data through the model.
+    """
+    device = device or (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
+    model = model_cls(
+        src_vocab_size=len(tokenizer),
+        embed_dim=config['embed_dim'],
+        hidden_dim=config['hidden_dim'],
+        num_layers=config['num_layers'],
+        relation_vocab_size = relation_vocab_size,
+        entity_vocab_size   = entity_vocab_size
+    ).to(device)
+
+    batch_size = config['bs']
+    src_len = config['max_src_len']
+    tgt_len = config['max_tgt_len']
+
+    # random source inputs
+    input_ids = torch.randint(0, len(tokenizer), (batch_size, src_len), device=device)
+    attention_mask = torch.ones_like(input_ids, device=device)
+    decoder_input  = torch.full((batch_size, tgt_len), SOS_ID, dtype=torch.long, device=device)
+
+    with torch.no_grad():
+        rel_logits, ent_logits = model(input_ids, attention_mask, decoder_input)
 
 
-"""
+    assert rel_logits.shape == (batch_size, tgt_len, relation_vocab_size)
+    assert ent_logits.shape == (batch_size, tgt_len, entity_vocab_size)
+    print(f"Dry run: rel={rel_logits.shape}, ent={ent_logits.shape}")
+
 def evaluate(model, loader, device, use_teacher,
              rel_criterion, ent_criterion,
              relation_vocab_size, entity_vocab_size):
@@ -147,67 +195,100 @@ def compute_bleu(model, loader, device):
         return bleu_score(hyps, refs, n_gram=4)
     except ValueError:
         return bleu_score(hyps, refs, n_gram=1)
-"""
-
-
-
 
 
 
 if __name__ == '__main__':
-    
     cpus = int(os.getenv('SLURM_CPUS_PER_TASK', 2))
     print(f"Using {cpus} DataLoader workers")
+    
+    args = parse_args()
+    use_teacher = not args.no_teacher
+    
+    run_suffix = 'RNN_TF' if use_teacher else 'RNN_No_TF'
+    run_name = f"{config['project']}_{run_suffix}"
 
-    run_name = "rnn"
+    # 1) Initialize W&B
+    wandb.login()
+    wandb.init(project=config['project'],name=run_name, config=config)
 
-    # initialize W&B
-    # wandb.login()
-    # wandb.init(project=config['project'],name=run_name, config=config)
-
-    # load MathQA dataset
-    mathqa = MathQA()
-    mathqa_len = mathqa.__len__()
-
-    train_percent = 0.8
-    train_len = int(mathqa_len*0.8)
-    test_len = mathqa_len - train_len
-
-    # split into training and testing datasets
-    train_set, test_set = torch.utils.data.random_split(mathqa, [train_len, test_len])
-
-    # create dataloaders
-    trainloader =DataLoader(train_set, batch_size=4, num_workers=4, shuffle=True, collate_fn=mathqa.pad_collate, drop_last=True)
-    testloader = DataLoader(test_set, batch_size=4, num_workers=4, shuffle=True, collate_fn=mathqa.pad_collate, drop_last=True)
-
-    # get device
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
-
-    # create model
-    model = EncoderDecoderRNN(
-        src_vocab_size=mathqa.src_vocab.__len__(),
-        trg_vocab_size=mathqa.trg_vocab.__len__(),
-        embed_dim=config['embed_dim'],
-        hidden_dim=config['hidden_dim'],
-        num_layers=config['num_layers'],
-    ).to(device)
-
-    dry_run(model, device)
+    # 2) Tokenizer setup
+    tokenizer = AutoTokenizer.from_pretrained(
+        'meta-llama/Llama-3.2-1B',
+        trust_remote_code=True,
+        token=True
+    )
+    # ensure placeholders never get split
+    # read the same two files
+    with open('./data/MathQA/operation_list.txt') as f:
+        operator_list = [l.strip() for l in f if l.strip()]
+    with open('./data/MathQA/constant_list.txt') as f:
+        constant_list = [l.strip() for l in f if l.strip()]
 
 
+    # placeholders
+    vars_  = [f'n{i}' for i in range(20)]
+    hashes = [f'#{i}' for i in range(20)]
 
-    """
+    all_special = operator_list + constant_list + vars_ + hashes
+    tokenizer.add_special_tokens({
+    'pad_token': '<PAD>',
+    'bos_token': '<SOS>',
+    'eos_token': '<EOS>',
+    'additional_special_tokens': all_special
+    })
+    tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids('<PAD>')
+    tokenizer.eos_token_id = tokenizer.convert_tokens_to_ids('<EOS>')
+    SOS_ID = tokenizer.bos_token_id
+
+    # rebuild your small‐vocab map from file
+    op2small_id = { op:i for i,op in enumerate(operator_list) }
+    relation_vocab_size = len(operator_list)
+    entity_vocab_size   = len(tokenizer)
+
+        
+    model_cls = EncoderDecoderRNN if use_teacher else EncoderDecoderRNNnoTF
+    
+
+    # 3) Dry-run
+    dry_run(model_cls, config, relation_vocab_size, entity_vocab_size)
+
+    # 4) Data loading (with fallback)
+    data_path = 'data/MathQA/train.json'
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Expected dataset at {data_path}, but it does not exist.")
+    ds = MathGraphDataset(
+        path=data_path,
+        tokenizer_src=tokenizer,
+        tokenizer_tgt=tokenizer,
+        max_src_len=config['max_src_len'],
+        max_tgt_len=config['max_tgt_len']
+    )
+
+    val_split = int(0.1 * len(ds))
+    train_loader = DataLoader(
+    Subset(ds, list(range(val_split, len(ds)))),
+    batch_size=config['bs'], shuffle=True,
+    num_workers=cpus,
+    pin_memory=True,
+)
+
+    val_loader = DataLoader(
+    Subset(ds, list(range(val_split))),
+    batch_size=config['bs'], shuffle=False,
+    num_workers=max(1, cpus//2),
+    pin_memory=True,
+)
+
     # 5) Model, optimizer, scheduler
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model_cls = EncoderDecoderRNN
     model = model_cls(
-        src_vocab_size=...,
-        embed_dim=config['embed_dim'],
-        hidden_dim=config['hidden_dim'],
-        num_layers=config['num_layers'],
-        relation_vocab_size=relation_vocab_size,  # small head
-        entity_vocab_size=entity_vocab_size     # full head
+        src_vocab_size      = len(tokenizer),
+        embed_dim          = config['embed_dim'],
+        hidden_dim         = config['hidden_dim'],
+        num_layers         = config['num_layers'],
+        relation_vocab_size = relation_vocab_size,  # small head
+        entity_vocab_size   = entity_vocab_size     # full head
     ).to(device)
     
     
@@ -340,4 +421,3 @@ if __name__ == '__main__':
 
     wandb.finish()
     pbar.close()
-    """
