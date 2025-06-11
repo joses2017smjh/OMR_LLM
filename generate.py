@@ -11,91 +11,109 @@ from data.MathQA import MathQA
 from models.DecoderTransformer import DecoderTransformer
 
 
-def argmax_sample(src_seq, max_steps):
+def argmax_sample(decoder, trg_vocab, device, src_seq, max_steps):
     # start generated sequence with <SOS>
     curr_seq = torch.ones((1,), dtype=int).to(device)
 
     # run through generation
     for step in range(max_steps):
 
+        # run through decoder
         out = decoder(torch.unsqueeze(src_seq, dim=0), torch.unsqueeze(curr_seq, dim=0))
         out = torch.squeeze(out, dim=0)
-        pred = torch.unsqueeze(torch.argmax(out[-1]), dim=0)
 
+        # make prediction and add to sequence
+        pred = torch.unsqueeze(torch.argmax(out[-1]), dim=0)
         curr_seq = torch.cat([curr_seq, pred], dim=0)
+
+        # terminate on <EOS>
         if pred == 2:
             break
     
     return curr_seq
 
 
-def smart_sample(src_seq, max_steps):
+def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
 
-    operation_range = (3, 55)
-    #number_range = (56, 282)
-    number_reference_range = (83, 182)
-    output_reference_range = (183, 282)
+    operation_range = (2, 55)
+    const_range = (56, 89)
+    num_ref_range = (90, 189)
+    out_ref_range = (190, 289)
 
     # start generated sequence with <SOS>
     curr_seq = torch.ones((1,), dtype=int).to(device)
-    
-    operands = 0  #track how many operands we expect
 
-    operation_count = 0  #track how many operations we've completed
-    numbers = (src_seq == 4).sum().item() # how many <NUM> tokens in src_seq
+    # how many <NUM> tokens in src_seq
+    total_num_refs = (src_seq == 4).sum().item()
     
-    for step in range(max_steps):
+    for op in range(max_ops):
+        
+        # run through decoder
         out = decoder(torch.unsqueeze(src_seq, dim=0), torch.unsqueeze(curr_seq, dim=0))
         out = torch.squeeze(out, dim=0)
         logits = out[-1]
 
-        
+        # create mask to predict over operations only
+        op_mask = torch.zeros_like(logits, dtype=torch.bool)
+        op_mask[:] = True
 
-        # Apply mask depending on whether we're expecting operands
-        mask = torch.zeros_like(logits, dtype=torch.bool)
+        # allow all operations
+        op_start, op_end = operation_range
+        op_mask[op_start : op_end] = False
 
-        mask[:] = True
+        # apply mask
+        logits = logits.masked_fill(op_mask, float('-inf'))
 
-        if operands > 0: #Want Numbers
-
-            num_start, num_end = number_reference_range
-            out_start, out_end = output_reference_range
-            
-            mask[num_start : num_start+numbers+1] = False
-            mask[out_start : out_start+operation_count+1] = False
-
-
-        else: #Want operation
-            op_start, op_end = operation_range
-            mask[op_start : op_end+1] = False
-            mask[2] = False #allow EOS token
-            operation_count += 1
-
-        logits = logits.masked_fill(mask, float('-inf'))
-
-
-        # Sample the best allowed token
-        pred = torch.argmax(logits, dim=-1, keepdim=True)
-
+        # make prediction and add to sequence
+        pred = torch.unsqueeze(torch.argmax(out[-1]), dim=0)
         curr_seq = torch.cat([curr_seq, pred], dim=0)
-        if pred == 2:  # <EOS>
+
+        # terminate on <EOS>
+        if pred == 2:
             break
+        
+        # get operation itself
+        pred_op = trg_vocab.idx2word[pred.item()]
 
-        # Update state
-        pred_token = trg_vocab.idx2word[pred.item()]
+        # iterate over number of operation arguments
+        for i in range(op_dict[pred_op]):
 
-        if operands > 0:
-            operands -= 1
-        else:
-            operands = operations_dict[pred_token]
+            # run through decoder
+            out = decoder(torch.unsqueeze(src_seq, dim=0), torch.unsqueeze(curr_seq, dim=0))
+            out = torch.squeeze(out, dim=0)
+            logits = out[-1]
+
+            # create mask to predict over specific entities only
+            ent_mask = torch.zeros_like(logits, dtype=torch.bool)
+            ent_mask[:] = True
+
+            # allow all constants
+            const_start, const_end = const_range
+            ent_mask[const_start : const_end] = False
+
+            # allow appropriate number references
+            num_ref_start, _ = num_ref_range
+            ent_mask[num_ref_start : num_ref_start + total_num_refs] = False
+
+            # allow appropriate output references
+            out_ref_start, _ = out_ref_range
+            ent_mask[out_ref_start : out_ref_start + op] = False
+
+            # apply mask
+            logits = logits.masked_fill(op_mask, float('-inf'))
+
+            # make prediction and add to sequence
+            pred = torch.unsqueeze(torch.argmax(out[-1]), dim=0)
+            curr_seq = torch.cat([curr_seq, pred], dim=0)
 
     return curr_seq
 
 
 if __name__ == '__main__':
-    # Open and read the JSON file
+    
+    # open and read JSON file
     with open('data/Operations.json', 'r') as file:
-        operations_dict = json.load(file)
+        op_dict = json.load(file)
 
     # load MathQA train dataset
     train_set = MathQA(split='train')
@@ -141,9 +159,6 @@ if __name__ == '__main__':
     trainable_params = sum(p.numel() for p in decoder.parameters() if p.requires_grad)
     print("Model has: " + str(trainable_params) + " trainable parameters")
 
-    # set maximum number of operations to predict
-    max_steps = 100
-
     # randomly sample problems from test dataset
     num_samples = 100
     sample_idx = torch.randperm(len(test_set))[:num_samples]
@@ -161,12 +176,13 @@ if __name__ == '__main__':
         src_seq = src_seq.to(device)
         trg_seq = trg_seq.to(device)
 
-        pred_seq_argmax = argmax_sample(src_seq, max_steps)
-        pred_seq_smart = smart_sample(src_seq, max_steps)
+        # autoregressive sampling (argmax vs smart)
+        pred_seq_argmax = argmax_sample(decoder=decoder, trg_vocab=trg_vocab, device=device, src_seq=src_seq, max_steps=100)
+        pred_seq_smart = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
         
+        # accuracy bookkeeping
         if torch.equal(trg_seq, pred_seq_argmax):
             correct_argmax += 1
-        
         if torch.equal(trg_seq, pred_seq_smart):
             correct_smart += 1
         
