@@ -83,8 +83,7 @@ if __name__ == '__main__':
         trg_vocab_size=trg_vocab_len,
         embed_dim=model_config['emb_dim'],
         num_layers=model_config['num_layers'],
-        num_heads=model_config['num_heads'],
-        max_trg_len=100
+        num_heads=model_config['num_heads']
     ).to(device)
 
     # run through dummy data

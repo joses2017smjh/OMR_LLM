@@ -14,15 +14,7 @@ const_1_6
 const_0_6
 const_0_2778
 const_0_3937
-const_2_0
-const_2_54
-const_0_4535
-const_2_2046
-const_3_0
 const_3_6
-const_4_0
-const_60_0
-const_100_0
 const_deg_to_rad
 const_52
 const_180
@@ -31,4 +23,4 @@ const_0_25
 const_0_33
 const_5
 const_26
-const_0_5
+
