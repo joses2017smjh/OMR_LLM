@@ -9,6 +9,7 @@ import wandb
 from tqdm import tqdm
 
 import time
+from datetime import datetime
 
 import random
 import os
@@ -29,7 +30,7 @@ train_config = {
 # model configuration
 model_config = {
     'emb_dim': 256,
-    'num_layers': 12,
+    'num_layers': 8,
     'num_heads': 8
 }
 
@@ -50,11 +51,12 @@ def dry_run(model, device, src_vocab_len, trg_vocab_len):
 
 if __name__ == '__main__':
     
-    run_name = "decoder_transformer_test"
+    now = datetime.now()
+    run_name = "decoder_transformer_" + now.strftime("%Y_%m_%d_%H_%m")
 
     # initialize wandb session
     wandb.login()
-    wandb.init(project="decoder_transformer",name=run_name, config=train_config)
+    wandb.init(project="MathQA Decoder Transformer",name=run_name, config=train_config)
 
     # load MathQA train dataset
     train_set = MathQA(split='train')
@@ -130,15 +132,21 @@ if __name__ == '__main__':
             out = model(src_seq, trg_seq)[:,:-1,:]
             trg_seq = trg_seq[:,1:]
 
+            # compute loss
             loss = criterion(out.permute(0,2,1), trg_seq)
 
             loss.backward()
             optimizer.step()
 
+            # compute accuracy
+            num_tokens = (trg_seq != 0).to(dtype=torch.float32).sum().item()
+            accuracy = (torch.argmax(out, dim=2)==trg_seq).to(dtype=torch.float32).sum() / num_tokens
+
             optimizer.zero_grad()
 
-            # log loss/train per batch
+            # log loss/train and accuracy/train per batch
             wandb.log({"Loss/train": loss.item()}, step=iteration)
+            wandb.log({"Accuracy/train": accuracy}, step=iteration)
             
             pbar.update(1)
             iteration += 1
@@ -146,18 +154,23 @@ if __name__ == '__main__':
             # step through scheduler
             scheduler.step()
     
+        # save model each epoch
         torch.save({
             'epoch':epoch,
             'model_state_dict': model.state_dict(),
+            'scheduler_state_dict': scheduler.state_dict(),
             'train_config': train_config,
-            'model_config': model_config},
-            "./chkpts/"+run_name+"_"+str(epoch))
+            'model_config': model_config,
+            'src_vocab': src_vocab,
+            'trg_vocab': trg_vocab},
+            "./chkpts/"+run_name+"_e"+str(epoch))
         
         # set model to evaluate
         model.eval()
 
         # validation loss
         val_loss = 0
+        val_accuracy = 0
 
         for batch in validation_loader:
 
@@ -169,10 +182,16 @@ if __name__ == '__main__':
             out = model(src_seq, trg_seq)[:,:-1,:]
             trg_seq = trg_seq[:,1:]
 
+            # compute loss
             val_loss += criterion(out.permute(0,2,1), trg_seq).item()
 
-        # log loss/train per batch
+            # compute accuracy
+            num_tokens = (trg_seq != 0).to(dtype=float).sum().item()
+            val_accuracy += (torch.argmax(out, dim=2)==trg_seq).to(dtype=float).sum() / num_tokens
+
+        # log loss/val and accuracy/val per batch
         wandb.log({"Loss/val": val_loss/len(validation_loader)}, step=iteration)
+        wandb.log({"Accuracy/val": val_accuracy/len(validation_loader)}, step=iteration)
 
     wandb.finish()
     pbar.close()
