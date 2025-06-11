@@ -149,7 +149,8 @@ if __name__ == '__main__':
     sample_idx = torch.randperm(len(test_set))[:num_samples]
 
     # keep track of accuracy
-    correct = 0
+    correct_argmax = 0
+    correct_smart = 0
 
     # run through samples
     pbar = tqdm(total=num_samples, desc="Test Problems", unit="example")
@@ -160,11 +161,14 @@ if __name__ == '__main__':
         src_seq = src_seq.to(device)
         trg_seq = trg_seq.to(device)
 
-        # pred_seq = argmax_sample(src_seq, max_steps)
-        pred_seq = smart_sample(src_seq, max_steps)
+        pred_seq_argmax = argmax_sample(src_seq, max_steps)
+        pred_seq_smart = smart_sample(src_seq, max_steps)
         
-        if torch.equal(trg_seq, pred_seq):
-            correct += 1
+        if torch.equal(trg_seq, pred_seq_argmax):
+            correct_argmax += 1
+        
+        if torch.equal(trg_seq, pred_seq_smart):
+            correct_smart += 1
         
         pbar.update(1)
 
@@ -183,5 +187,6 @@ if __name__ == '__main__':
         
         # print("")
     
-    print("Accuracy: " + str(correct/num_samples))
+    print("argmax accuracy: " + str(correct_argmax/num_samples))
+    print("smart accuracy: " + str(correct_smart/num_samples))
     pbar.close()
