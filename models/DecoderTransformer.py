@@ -44,8 +44,7 @@ class DecoderTransformer(nn.Module):
             trg_vocab_size,
             embed_dim,
             num_layers,
-            num_heads,
-            max_trg_len,
+            num_heads
     ):
         super().__init__()
 
