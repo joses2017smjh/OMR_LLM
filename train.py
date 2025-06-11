@@ -4,16 +4,10 @@ from torch.utils.data import DataLoader, Subset
 from torcheval.metrics.functional import bleu_score
 from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR, SequentialLR
 
-from transformers import AutoTokenizer
 import wandb
 from tqdm import tqdm
-
-import time
 from datetime import datetime
-
 import random
-import os
-import argparse
 
 from data.MathQA import MathQA
 from models.DecoderTransformer import DecoderTransformer
