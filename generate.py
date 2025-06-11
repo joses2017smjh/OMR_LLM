@@ -35,10 +35,10 @@ def argmax_sample(decoder, trg_vocab, device, src_seq, max_steps):
 
 def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
 
-    operation_range = (2, 55)
-    const_range = (56, 89)
-    num_ref_range = (90, 189)
-    out_ref_range = (190, 289)
+    operation_range = (2, 56)
+    const_range = (56, 90)
+    num_ref_range = (90, 190)
+    out_ref_range = (190, 290)
 
     # start generated sequence with <SOS>
     curr_seq = torch.ones((1,), dtype=int).to(device)
@@ -160,8 +160,8 @@ if __name__ == '__main__':
     print("Model has: " + str(trainable_params) + " trainable parameters")
 
     # randomly sample problems from test dataset
-    num_samples = 100
-    sample_idx = torch.randperm(len(test_set))[:num_samples]
+    num_samples = 10
+    sample_idx = torch.randperm(len(validation_set))[:num_samples]
 
     # keep track of accuracy
     correct_argmax = 0
@@ -172,14 +172,22 @@ if __name__ == '__main__':
     for idx in sample_idx:
 
         # get test source and target sequences
-        src_seq, trg_seq = test_set[idx]
+        src_seq, trg_seq = validation_set[idx]
         src_seq = src_seq.to(device)
         trg_seq = trg_seq.to(device)
 
         # autoregressive sampling (argmax vs smart)
         pred_seq_argmax = argmax_sample(decoder=decoder, trg_vocab=trg_vocab, device=device, src_seq=src_seq, max_steps=100)
         pred_seq_smart = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
-        
+    
+        pred_str_argmax = " ".join(trg_vocab.idx2text(pred_seq_argmax.to('cpu').numpy()))
+        pred_str_smart = " ".join(trg_vocab.idx2text(pred_seq_smart.to('cpu').numpy()))
+        trg_str = " ".join(trg_vocab.idx2text(trg_seq.to('cpu').numpy()))
+        print(pred_str_argmax)
+        print(pred_str_smart)
+        print(trg_str)
+        print("")
+
         # accuracy bookkeeping
         if torch.equal(trg_seq, pred_seq_argmax):
             correct_argmax += 1
