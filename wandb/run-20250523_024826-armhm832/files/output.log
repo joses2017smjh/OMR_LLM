@@ -1,7 +1,0 @@
-✅ Dry run successful: rel=torch.Size([32, 64, 128260]), ent=torch.Size([32, 64, 128260])
-Local file not found, pulling HF 'math_qa' split and caching
-Traceback (most recent call last):
-  File "C:\Users\joses\Desktop\OMR_LLM\train.py", line 146, in <module>
-    json.dump([dict(ex) for ex in raw], f)
-    ^^^^
-NameError: name 'json' is not defined

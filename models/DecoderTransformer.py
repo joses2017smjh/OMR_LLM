@@ -2,6 +2,9 @@ import torch
 from torch import nn
 import math
 
+# get device
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
+
 
 class PositionalEncoding(nn.Module):
     def __init__(self, embed_dim):
@@ -40,10 +43,9 @@ class DecoderTransformer(nn.Module):
             src_vocab_size,
             trg_vocab_size,
             embed_dim,
-            max_src_len,
-            max_trg_len,
             num_layers,
-            num_heads
+            num_heads,
+            max_src_len,
     ):
         super().__init__()
 
@@ -95,7 +97,7 @@ class DecoderTransformer(nn.Module):
         trg_mask_2 = torch.tril(trg_mask_2, diagonal=-1).T
         trg_mask = torch.cat((trg_mask_1, trg_mask_2), dim=0)
 
-        causal_mask = torch.cat((src_mask, trg_mask), dim=1)
+        causal_mask = torch.cat((src_mask, trg_mask), dim=1).to(device)
 
         # run sequence through decoder
         seq_out = self.decoder(src=seq, mask=causal_mask)

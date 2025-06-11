@@ -1,2 +1,0 @@
-✅ Dry run successful: rel=torch.Size([32, 64, 128260]), ent=torch.Size([32, 64, 128260])
-Local file not found, pulling HF 'math_qa' split and caching
