@@ -84,6 +84,20 @@ combined_work
 find_work
 speed_ratio_steel_to_stream
 
+reminder (duplicate existed in operation_list.txt)
+
+
+
+Removed Constants:
+const_2_0
+const_2_54
+const_0_4535
+const_2_2046
+const_3_0
+const_4_0
+const_60_0
+const_100_0
+const_0_5
 
 
 """
