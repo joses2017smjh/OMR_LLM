@@ -146,8 +146,15 @@ class MathQA(Dataset):
             trust_remote_code=True
         )
 
+        self.val_dataset = load_dataset(
+            'math_qa',
+            'all',
+            split="validation",
+            trust_remote_code=True
+        )
+
         # get all possible problems
-        self.dataset = concatenate_datasets([self.train_dataset, self.test_dataset])
+        self.dataset = concatenate_datasets([self.train_dataset, self.test_dataset, self.val_dataset])
 
         # separate between problems and linear formulas
         temp_problem_data = [x["Problem"] for x in self.dataset]
