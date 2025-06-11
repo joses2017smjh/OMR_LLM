@@ -45,7 +45,7 @@ class DecoderTransformer(nn.Module):
             embed_dim,
             num_layers,
             num_heads,
-            max_src_len,
+            max_trg_len,
     ):
         super().__init__()
 

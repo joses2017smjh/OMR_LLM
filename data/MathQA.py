@@ -124,37 +124,20 @@ class LinearFormulaVocab:
         
         return word2idx, idx2word
 
+
 # MathQA dataset loader
 class MathQA(Dataset):
-    def __init__(self, src_vocab=None, max_src_len=128, max_trg_len=128):
+    
+    def __init__(self, src_vocab=None, split='test'):
       
-        # get MathQA train dataset
-        print("Loading MathQA train dataset")
-        self.train_dataset = load_dataset(
+        # get MathQA split dataset
+        print("Loading MathQA " + split + " dataset")
+        self.dataset = load_dataset(
             'math_qa',
             'all',
-            split='train',
+            split=split,
             trust_remote_code=True
         )
-
-        # get MathQA test dataset
-        print("Loading MathQA test dataset")
-        self.test_dataset = load_dataset(
-            'math_qa',
-            'all',
-            split='test',
-            trust_remote_code=True
-        )
-
-        self.val_dataset = load_dataset(
-            'math_qa',
-            'all',
-            split="validation",
-            trust_remote_code=True
-        )
-
-        # get all possible problems
-        self.dataset = concatenate_datasets([self.train_dataset, self.test_dataset, self.val_dataset])
 
         # separate between problems and linear formulas
         temp_problem_data = [x["Problem"] for x in self.dataset]
@@ -196,19 +179,17 @@ class MathQA(Dataset):
 
             self.linear_formula_data.append(y)
 
-        # keep track of max source and target lengths
-        self.max_src_len = max_src_len
-        self.max_trg_len = max_trg_len
     
     def __len__(self):
         return len(self.dataset)
 
-    def __getitem__(self, idx):
 
+    def __getitem__(self, idx):
         x = self.problem_data[idx]
         y = self.linear_formula_data[idx]
 
         return torch.tensor(x), torch.tensor(y)
+
 
     @staticmethod
     def pad_collate(batch):
