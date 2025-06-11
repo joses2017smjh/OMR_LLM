@@ -23,7 +23,7 @@ train_config = {
     'bs': 32,
     'lr': 0.001,
     'weight_decay': 0.00001,
-    'max_epochs': 10
+    'max_epochs': 30
 }
 
 # model configuration
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     trg_vocab = train_set.trg_vocab
 
     # load MathQA validation dataset
-    validation_set = MathQA(split='validation')
+    validation_set = MathQA(src_vocab=src_vocab, split='validation')
 
     # get source and target vocab lengths
     src_vocab_len = len(src_vocab)
@@ -97,16 +97,19 @@ if __name__ == '__main__':
     warmup_epochs = int(train_config['max_epochs'] / 10)
     cooldown_epochs = train_config['max_epochs'] - warmup_epochs
 
+    # epoch length
+    epoch_len = len(train_loader)
+
     # construct linear warmup and cosine annealing scheduler
-    linear = LinearLR(optimizer, start_factor=0.25, end_factor=1.0, total_iters=warmup_epochs)
-    cosine = CosineAnnealingLR(optimizer, T_max=cooldown_epochs, eta_min=1e-6)
-    scheduler = SequentialLR(optimizer, schedulers=[linear, cosine], milestones=[warmup_epochs])
+    linear = LinearLR(optimizer, start_factor=0.25, end_factor=1.0, total_iters=warmup_epochs*epoch_len)
+    cosine = CosineAnnealingLR(optimizer, T_max=cooldown_epochs*epoch_len, eta_min=1e-6)
+    scheduler = SequentialLR(optimizer, schedulers=[linear, cosine], milestones=[warmup_epochs*epoch_len])
 
     # set up cross entropy loss for transformer output
     criterion = nn.CrossEntropyLoss(ignore_index=0)
 
     # set up progress bar
-    pbar = tqdm(total=train_config['max_epochs']*len(train_loader), desc="Training Iterations", unit="batch")
+    pbar = tqdm(total=train_config['max_epochs']*epoch_len, desc="Training Iterations", unit="batch")
 
     # main training loop
     iteration = 0
@@ -115,10 +118,10 @@ if __name__ == '__main__':
         # set model to train
         model.train()
 
-        # log lr for each epoch
-        wandb.log({'LR': scheduler.get_last_lr()[0]}, step=iteration)
-
         for batch in train_loader:
+
+            # log lr for each epoch
+            wandb.log({'LR': scheduler.get_last_lr()[0]}, step=iteration)
 
             # get word problem and linear formula
             src_seq = batch[0].to(device)
@@ -140,10 +143,15 @@ if __name__ == '__main__':
             
             pbar.update(1)
             iteration += 1
+
+            # step through scheduler
+            scheduler.step()
     
         torch.save({
             'epoch':epoch,
-            'model_state_dict': model.state_dict()},
+            'model_state_dict': model.state_dict(),
+            'train_config': train_config,
+            'model_config': model_config},
             "./chkpts/"+run_name+"_"+str(epoch))
         
         # set model to evaluate
@@ -162,16 +170,10 @@ if __name__ == '__main__':
             out = model(src_seq, trg_seq)[:,:-1,:]
             trg_seq = trg_seq[:,1:]
 
-            loss = criterion(out.permute(0,2,1), trg_seq)
-
-            loss.backward()
-            val_loss += loss.item()
+            val_loss += criterion(out.permute(0,2,1), trg_seq).item()
 
         # log loss/train per batch
         wandb.log({"Loss/val": val_loss/len(validation_loader)}, step=iteration)
-
-        # step through scheduler
-        scheduler.step()
 
     wandb.finish()
     pbar.close()
