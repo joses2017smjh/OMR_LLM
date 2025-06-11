@@ -59,7 +59,7 @@ def dry_run(model, device):
 
 
 
-"""
+
 def evaluate(model, loader, device, use_teacher,
              rel_criterion, ent_criterion,
              relation_vocab_size, entity_vocab_size):
@@ -147,7 +147,7 @@ def compute_bleu(model, loader, device):
         return bleu_score(hyps, refs, n_gram=4)
     except ValueError:
         return bleu_score(hyps, refs, n_gram=1)
-"""
+
 
 
 
@@ -196,7 +196,7 @@ if __name__ == '__main__':
 
 
 
-    """
+
     # 5) Model, optimizer, scheduler
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -340,4 +340,3 @@ if __name__ == '__main__':
 
     wandb.finish()
     pbar.close()
-    """
