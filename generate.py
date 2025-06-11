@@ -15,6 +15,13 @@ import argparse
 from data.MathQA import MathQA
 from models.DecoderTransformer import DecoderTransformer
 
+import json
+
+
+# Open and read the JSON file
+with open('data/Operations.json', 'r') as file:
+    operations_dict = json.load(file)
+
 
 # load MathQA train dataset
 train_set = MathQA(split='train')
@@ -67,17 +74,11 @@ max_steps = 100
 num_samples = 100
 sample_idx = torch.randperm(len(test_set))[:num_samples]
 
-correct = 0
 
-# run through samples
-pbar = tqdm(total=num_samples, desc="Test Problems", unit="example")
-for idx in sample_idx:
 
-    # get test source and target sequences
-    src_seq, trg_seq = test_set[idx]
-    src_seq = src_seq.to(device)
-    trg_seq = trg_seq.to(device)
 
+
+def argmax_sample(src_seq):
     # start generated sequence with <SOS>
     curr_seq = torch.ones((1,), dtype=int).to(device)
 
@@ -91,6 +92,104 @@ for idx in sample_idx:
         curr_seq = torch.cat([curr_seq, pred], dim=0)
         if pred == 2:
             break
+
+
+
+def smart_sample(src_seq):
+
+    operation_range = (3, 55)
+    #number_range = (56, 282)
+    number_reference_range = (83, 182)
+    output_reference_range = (183, 282)
+
+    # start generated sequence with <SOS>
+    curr_seq = torch.ones((1,), dtype=int).to(device)
+    
+    operands = 0  #track how many operands we expect
+
+    operation_count = 0  #track how many operations we've completed
+    numbers = (src_seq == 4).sum().item() # how many <NUM> tokens in src_seq
+    
+    for step in range(max_steps):
+        out = decoder(torch.unsqueeze(src_seq, dim=0), torch.unsqueeze(curr_seq, dim=0))
+        out = torch.squeeze(out, dim=0)
+        logits = out[-1]
+
+        
+
+        # Apply mask depending on whether we're expecting operands
+        mask = torch.zeros_like(logits, dtype=torch.bool)
+
+        mask[:] = True
+
+        if operands > 0: #Want Numbers
+
+            num_start, num_end = number_reference_range
+            out_start, out_end = output_reference_range
+            
+            mask[num_start : num_start+numbers+1] = False
+            mask[out_start : out_start+operation_count+1] = False
+
+
+        else: #Want operation
+            op_start, op_end = operation_range
+            mask[op_start : op_end+1] = False
+            mask[2] = False #allow EOS token
+            operation_count += 1
+
+        logits = logits.masked_fill(mask, float('-inf'))
+
+
+        # Sample the best allowed token
+        pred = torch.argmax(logits, dim=-1, keepdim=True)
+
+        curr_seq = torch.cat([curr_seq, pred], dim=0)
+        if pred == 2:  # <EOS>
+            break
+
+        # Update state
+        pred_token = trg_vocab.idx2word(pred)
+
+        if operands > 0:
+            operands -= 1
+        else:
+            operands = operations_dict[pred_token]
+
+    return curr_seq
+
+        
+
+
+correct = 0
+
+# run through samples
+pbar = tqdm(total=num_samples, desc="Test Problems", unit="example")
+for idx in sample_idx:
+
+
+    # get test source and target sequences
+    src_seq, trg_seq = test_set[idx]
+    src_seq = src_seq.to(device)
+    trg_seq = trg_seq.to(device)
+
+
+    #curr_seq = argmax_sample(src_seq)
+    curr_seq = smart_sample(src_seq)
+
+
+    # # start generated sequence with <SOS>
+    # curr_seq = torch.ones((1,), dtype=int).to(device)
+
+    # # run through generation
+    # for step in range(max_steps):
+
+    #     out = decoder(torch.unsqueeze(src_seq, dim=0), torch.unsqueeze(curr_seq, dim=0))
+    #     out = torch.squeeze(out, dim=0)
+    #     pred = torch.unsqueeze(torch.argmax(out[-1]), dim=0)
+
+    #     curr_seq = torch.cat([curr_seq, pred], dim=0)
+    #     if pred == 2:
+    #         break
     
     if torch.equal(trg_seq, curr_seq):
         correct += 1
@@ -111,6 +210,11 @@ for idx in sample_idx:
     # print(pred_lin_form)
     
     # print("")
+
+
+        
+
+
 
 print("Accuracy: " + str(correct/num_samples))
 pbar.close()
