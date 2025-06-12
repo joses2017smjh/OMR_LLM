@@ -112,43 +112,48 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
 
     return curr_seq
 
-def compute_bleu(pred_seq: torch.Tensor, 
-                 ref_seq: torch.Tensor, 
-                 pad_token: int = 0, 
-                 eos_token: int = 2, 
-                 max_n: int = 4, 
-                 device=None) -> float:
-    """
-    pred_seq: 1D tensor of token IDs (including SOS/EOS)
-    ref_seq:  1D tensor of token IDs (including SOS/EOS)
-    Returns: sentence-level BLEU (scalar float)
-    """
-    # Move to CPU for list ops if needed
-    pred = pred_seq.tolist()
-    ref  = ref_seq.tolist()
-    # drop SOS (1) and PAD (0) everywhere
-    def clean(x):
-        # remove leading SOS
-        if len(x) and x[0] == 1:  
-            x = x[1:]
-        # truncate at EOS
-        if eos_token in x:
-            x = x[: x.index(eos_token) ]
-        # drop any PAD tokens
-        return [tok for tok in x if tok != pad_token]
-    pred_tokens = clean(pred)
-    ref_tokens  = clean(ref)
-    # pad to same length
-    L = max(len(pred_tokens), len(ref_tokens))
-    pred_tokens += [pad_token] * (L - len(pred_tokens))
-    ref_tokens  += [pad_token] * (L - len(ref_tokens))
-    # make batch dims:
-    # predictions: (batch_size, seq_len) → here batch_size=1
-    # references:  (batch_size, num_references, seq_len) → num_references=1
-    pred_tensor = torch.tensor([pred_tokens], dtype=torch.int64, device=device)
-    ref_tensor  = torch.tensor([ [ref_tokens] ], dtype=torch.int64, device=device)
-    # compute BLEU
-    return bleu_score(pred_tensor, ref_tensor, max_n=max_n).item()
+def compute_bleu(pred_seq: torch.Tensor,
+                  ref_seq:  torch.Tensor, pad_token: int = 0, eos_token: int = 2, n_gram:    int = 3) -> float:
+    # 1) Turn IDs → token strings, and strip SOS/EOS/PAD
+    def clean_and_map(id_list):
+        # drop SOS (1), PAD (0), cut at EOS (2)
+        if id_list and id_list[0] == 1:
+            id_list = id_list[1:]
+        if 2 in id_list:
+            id_list = id_list[:id_list.index(2)]
+        return [trg_vocab.idx2word[i] for i in id_list if i != 0]
+
+    pred_ids = pred_seq.tolist()
+    ref_ids  = ref_seq.tolist()
+    pred_tokens = clean_and_map(pred_ids)
+    ref_tokens  = clean_and_map(ref_ids)
+
+    # 2) Build the “sentences” for Torcheval:
+    candidate = [" ".join(pred_tokens)]
+    reference = [[" ".join(ref_tokens)]]
+
+    # 3) Call BLEU with the right arg name:
+    Lp, Lr = len(pred_tokens), len(ref_tokens)
+    # If either side is shorter than n_gram, fall back to BLEU-1
+    use_n = n_gram if (Lp >= n_gram and Lr >= n_gram) else 1
+
+    # 4) pad the shorter list up to the longer
+    L = max(Lp, Lr)
+    pred_tokens += [pad_token] * (L - Lp)
+    ref_tokens  += [pad_token] * (L - Lr)
+
+    # 5) wrap into Torcheval’s batch format:
+    #    candidate: [“t1 t2 …”]
+    #    reference: [[“r1 r2 …”]]
+    candidate = [" ".join(map(str, pred_tokens))]
+    reference = [[ " ".join(map(str, ref_tokens)) ]]
+
+    try:
+        score = bleu_score(candidate, reference, n_gram=use_n)
+        return score.item()
+    except ValueError:
+        # worst case: give zero if something still fails
+        return 0.0
 
 if __name__ == '__main__':
     
@@ -223,19 +228,19 @@ if __name__ == '__main__':
         pred_seq_argmax = argmax_sample(decoder=decoder, trg_vocab=trg_vocab, device=device, src_seq=src_seq, max_steps=100)
         pred_seq_smart = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
 
+        # Computing BLEU scores        
+        bleu_argmax = compute_bleu(pred_seq_argmax, trg_seq )
+        bleu_smart  = compute_bleu(pred_seq_smart,  trg_seq)
+        total_bleu_argmax += bleu_argmax
+        total_bleu_smart  += bleu_smart
+        
+        
         # accuracy bookkeeping
         if torch.equal(trg_seq, pred_seq_argmax):
             correct_argmax += 1
         if torch.equal(trg_seq, pred_seq_smart):
             correct_smart += 1
-        
-        bleu_argmax = compute_bleu(pred_seq_argmax, trg_seq, device=device)
-        bleu_smart  = compute_bleu(pred_seq_smart,  trg_seq, device=device)
-        total_bleu_argmax += bleu_argmax
-        total_bleu_smart  += bleu_smart
-
-        # if you’re using tqdm, use tqdm.write so it doesn’t get swallowed
-        tqdm.write(f"[{i}/{num_samples}] BLEU(argmax) = {bleu_argmax:.4f}, BLEU(smart) = {bleu_smart:.4f}")
+            
         pbar.update(1)
     
     print("argmax accuracy: " + str(correct_argmax/num_samples))
@@ -246,9 +251,3 @@ if __name__ == '__main__':
     print("smart average BLEU: " + str(avg_bleu_smart))
 
     pbar.close()
-    avg_bleu_argmax = total_bleu_argmax / num_samples
-    avg_bleu_smart  = total_bleu_smart  / num_samples
-    print(f"argmax accuracy: {correct_argmax/num_samples:.4f}")
-    print(f"smart  accuracy: {correct_smart/num_samples:.4f}")
-    print(f"Avg BLEU (argmax) = {avg_bleu_argmax:.4f}")
-    print(f"Avg BLEU (smart)  = {avg_bleu_smart:.4f}")
