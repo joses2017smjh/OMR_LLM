@@ -27,7 +27,6 @@ def build_dag(linear_string):
 
     operands = 0
     id = 0
-    print(linear_string)
 
     for token in linear_string:
         op_id = f"#{id}"
@@ -69,6 +68,7 @@ def ged(G1, G2):
         edge_match=lambda e1, e2: e1['label'] == e2['label'],
         #node_subst_cost=lambda n1, n2: 0 if n1['label'] == n2['label'] else 1,
         #edge_subst_cost=lambda e1, e2: 0 if e1['label'] == e2['label'] else 1,
+        timeout=45.0
 
     )
 
@@ -87,8 +87,8 @@ if __name__ == "__main__":
     G1 = build_dag(linear_string1)
     G2 = build_dag(linear_string2)
 
-    draw_dag(G1, title="Graph 1")
-    draw_dag(G2, title="Graph 2")
+    # draw_dag(G1, title="Graph 1")
+    # draw_dag(G2, title="Graph 2")
 
     ged = ged(G1, G2)
     print(f"Graph Edit Distance: {ged}")
