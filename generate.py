@@ -9,6 +9,7 @@ import json
 
 from data.MathQA import MathQA
 from models.DecoderTransformer import DecoderTransformer
+from graph_edit import compute
 
 
 def argmax_sample(decoder, trg_vocab, device, src_seq, max_steps):
@@ -214,6 +215,8 @@ if __name__ == '__main__':
     correct_smart = 0
     total_bleu_argmax = 0.0
     total_bleu_smart  = 0.0
+    ged_smart = 0
+    ged_argmax = 0
 
     # run through samples
     pbar = tqdm(total=num_samples, desc="Test Problems", unit="example")
@@ -233,7 +236,15 @@ if __name__ == '__main__':
         bleu_smart  = compute_bleu(pred_seq_smart,  trg_seq)
         total_bleu_argmax += bleu_argmax
         total_bleu_smart  += bleu_smart
+
+        pred_str_argmax = trg_vocab.idx2text(pred_seq_argmax[1:-1].to('cpu').numpy())
         
+        pred_str_smart = trg_vocab.idx2text(pred_seq_smart[1:-1].to('cpu').numpy())
+        trg_str = trg_vocab.idx2text(trg_seq[1:-1].to('cpu').numpy())
+
+        ged_smart += compute(trg_str, pred_str_smart)
+        ged_argmax += compute(trg_str, pred_str_argmax)
+
         
         # accuracy bookkeeping
         if torch.equal(trg_seq, pred_seq_argmax):
@@ -243,11 +254,15 @@ if __name__ == '__main__':
             
         pbar.update(1)
     
+
     print("argmax accuracy: " + str(correct_argmax/num_samples))
     print("smart accuracy: " + str(correct_smart/num_samples))
     avg_bleu_argmax = total_bleu_argmax / num_samples
     avg_bleu_smart  = total_bleu_smart  / num_samples
     print("argmax average BLEU: " + str(avg_bleu_argmax))
     print("smart average BLEU: " + str(avg_bleu_smart))
+    print("argmax average GED: " + str(ged_argmax / num_samples))
+    print("smart average GED: " + str(ged_smart / num_samples))
+
 
     pbar.close()
