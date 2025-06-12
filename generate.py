@@ -20,10 +20,10 @@ def argmax_sample(decoder, trg_vocab, device, src_seq, max_steps):
 
         # run through decoder
         out = decoder(torch.unsqueeze(src_seq, dim=0), torch.unsqueeze(curr_seq, dim=0))
-        out = torch.squeeze(out, dim=0)
+        out = torch.squeeze(out, dim=0)[-1]
 
         # make prediction and add to sequence
-        pred = torch.unsqueeze(torch.argmax(out[-1]), dim=0)
+        pred = torch.unsqueeze(torch.argmax(out), dim=0)
         curr_seq = torch.cat([curr_seq, pred], dim=0)
 
         # terminate on <EOS>
@@ -50,11 +50,10 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
         
         # run through decoder
         out = decoder(torch.unsqueeze(src_seq, dim=0), torch.unsqueeze(curr_seq, dim=0))
-        out = torch.squeeze(out, dim=0)
-        logits = out[-1]
+        out = torch.squeeze(out, dim=0)[-1]
 
         # create mask to predict over operations only
-        op_mask = torch.zeros_like(logits, dtype=torch.bool)
+        op_mask = torch.zeros_like(out, dtype=torch.bool)
         op_mask[:] = True
 
         # allow all operations
@@ -62,10 +61,10 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
         op_mask[op_start : op_end] = False
 
         # apply mask
-        logits = logits.masked_fill(op_mask, float('-inf'))
+        logits = out.masked_fill(op_mask, float('-inf'))
 
         # make prediction and add to sequence
-        pred = torch.unsqueeze(torch.argmax(out[-1]), dim=0)
+        pred = torch.unsqueeze(torch.argmax(logits), dim=0)
         curr_seq = torch.cat([curr_seq, pred], dim=0)
 
         # terminate on <EOS>
@@ -80,11 +79,10 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
 
             # run through decoder
             out = decoder(torch.unsqueeze(src_seq, dim=0), torch.unsqueeze(curr_seq, dim=0))
-            out = torch.squeeze(out, dim=0)
-            logits = out[-1]
+            out = torch.squeeze(out, dim=0)[-1]
 
             # create mask to predict over specific entities only
-            ent_mask = torch.zeros_like(logits, dtype=torch.bool)
+            ent_mask = torch.zeros_like(out, dtype=torch.bool)
             ent_mask[:] = True
 
             # allow all constants
@@ -100,10 +98,10 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
             ent_mask[out_ref_start : out_ref_start + op] = False
 
             # apply mask
-            logits = logits.masked_fill(op_mask, float('-inf'))
+            logits = out.masked_fill(ent_mask, float('-inf'))
 
             # make prediction and add to sequence
-            pred = torch.unsqueeze(torch.argmax(out[-1]), dim=0)
+            pred = torch.unsqueeze(torch.argmax(logits), dim=0)
             curr_seq = torch.cat([curr_seq, pred], dim=0)
 
     return curr_seq
@@ -112,7 +110,7 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
 if __name__ == '__main__':
     
     # open and read JSON file
-    with open('data/Operations.json', 'r') as file:
+    with open('data/operations.json', 'r') as file:
         op_dict = json.load(file)
 
     # load MathQA train dataset
@@ -131,6 +129,8 @@ if __name__ == '__main__':
     # get source and target vocab lengths
     src_vocab_len = len(src_vocab)
     trg_vocab_len = len(trg_vocab)
+
+    print(trg_vocab.idx2word)
 
     # get device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
@@ -160,8 +160,8 @@ if __name__ == '__main__':
     print("Model has: " + str(trainable_params) + " trainable parameters")
 
     # randomly sample problems from test dataset
-    num_samples = 10
-    sample_idx = torch.randperm(len(validation_set))[:num_samples]
+    num_samples = 100
+    sample_idx = torch.randperm(len(test_set))[:num_samples]
 
     # keep track of accuracy
     correct_argmax = 0
@@ -172,21 +172,26 @@ if __name__ == '__main__':
     for idx in sample_idx:
 
         # get test source and target sequences
-        src_seq, trg_seq = validation_set[idx]
+        src_seq, trg_seq = test_set[idx]
         src_seq = src_seq.to(device)
         trg_seq = trg_seq.to(device)
 
         # autoregressive sampling (argmax vs smart)
         pred_seq_argmax = argmax_sample(decoder=decoder, trg_vocab=trg_vocab, device=device, src_seq=src_seq, max_steps=100)
         pred_seq_smart = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
-    
-        pred_str_argmax = " ".join(trg_vocab.idx2text(pred_seq_argmax.to('cpu').numpy()))
-        pred_str_smart = " ".join(trg_vocab.idx2text(pred_seq_smart.to('cpu').numpy()))
-        trg_str = " ".join(trg_vocab.idx2text(trg_seq.to('cpu').numpy()))
-        print(pred_str_argmax)
-        print(pred_str_smart)
-        print(trg_str)
-        print("")
+
+        if not torch.equal(pred_seq_argmax, pred_seq_smart):
+            src_str = " ".join(src_vocab.idx2text(src_seq.to('cpu').numpy()))
+            argmax_str = " ".join(trg_vocab.idx2text(pred_seq_argmax.to('cpu').numpy()))
+            smart_str = " ".join(trg_vocab.idx2text(pred_seq_smart.to('cpu').numpy()))
+            trg_str = " ".join(trg_vocab.idx2text(trg_seq.to('cpu').numpy()))
+            
+            print("problem: " + src_str)
+            print("argmax: " + argmax_str)
+            print("smart: " + smart_str)
+            print("target: " + trg_str)
+            print("")
+
 
         # accuracy bookkeeping
         if torch.equal(trg_seq, pred_seq_argmax):
