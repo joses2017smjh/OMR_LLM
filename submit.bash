@@ -7,12 +7,12 @@
 #SBATCH --time=1-00:00:00
 #SBATCH --mail-type=BEGIN,END,FAIL
 
-# sq -u negreanj
+# sq -u sanchej7
 # ssh ...
 # ml cuda/12.4 cudnn
 # export CUDA_VISIBLE_DEVICES=0
 
-source /nfs/stak/users/negreanj/hpc-share/nlp-hw2/bin/activate
+source /nfs/hpc/share/sanchej7/AI539/OMR_LLM/venv/bin/activate
 
 python generate.py
 
