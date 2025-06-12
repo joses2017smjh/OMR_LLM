@@ -233,15 +233,16 @@ if __name__ == '__main__':
             
         pbar.update(1)
     
+    pbar.close()
 
+    # print accuracies
     print("argmax accuracy:\t" + str(correct_argmax/num_samples))
     print("smart accuracy:\t" + str(correct_smart/num_samples))
 
+    # print BLEU scores
     print("argmax average BLEU:\t" + str(total_bleu_argmax/num_samples))
     print("smart average BLEU:\t" + str(total_bleu_smart/num_samples))
 
+    # print GEDs
     print("argmax average GED: " + str(ged_argmax/num_samples))
     print("smart average GED: " + str(ged_smart/num_samples))
-
-
-    pbar.close()
