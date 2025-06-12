@@ -2,6 +2,11 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from networkx.algorithms.similarity import graph_edit_distance
 
+import json
+
+with open('data/operations.json', 'r') as file:
+        op_dict = json.load(file)
+
 
 
 def check_node(G, arg):
@@ -15,29 +20,31 @@ def check_node(G, arg):
         # else:
         #     G.add_node(arg, label="input")
 
-def build_dag(op_string):
+
+def build_dag(linear_string):
+
     G = nx.DiGraph()
-    op_list = [op for op in op_string.strip("|").split("|")]
-    #print(op_list)
 
-    for idx, expr in enumerate(op_list):
-        op_id = f"#{idx}"
+    operands = 0
+    id = 0
+    print(linear_string)
 
-        op_name, args = expr.split("(")
-        op_name.strip()
-        #print(op_name)
+    for token in linear_string:
+        op_id = f"#{id}"
 
-        args = args.strip(")").split(",")
-
-        #print(args)
-
-        G.add_node(op_id, label=op_name)
-
-        for arg in args:
-            check_node(G, arg)
-            G.add_edge(arg, op_id, label=arg)
+        if token in op_dict:
+            operands = op_dict[token]
+            G.add_node(op_id, label=token)
+            
+        else:
+            check_node(G, token)
+            G.add_edge(token, op_id, label=token)
+            operands -= 1
+            if operands == 0:
+                id += 1
 
     return G
+
 
 
 def draw_dag(G, title="Graph"):
@@ -74,13 +81,14 @@ def compute(trg_graph, pred_graph):
 
 if __name__ == "__main__":
     
-    graph_str1 = "multiply(n2,n2)|subtract(#0,const_1)|"
-    graph_str2 = "multiply(n1,n2)|subtract(#0,const_1)|"
-    G1 = build_dag(graph_str1)
-    G2 = build_dag(graph_str2)
+    linear_string1 = ["add", "n2", "n2", "subtract", "#0", "const_1"]
+    linear_string2 = ["multiply", "n1", "n2", "subtract", "#0", "const_1"]
 
-    # draw_dag(G1, title="Graph 1")
-    # draw_dag(G2, title="Graph 2")
+    G1 = build_dag(linear_string1)
+    G2 = build_dag(linear_string2)
+
+    draw_dag(G1, title="Graph 1")
+    draw_dag(G2, title="Graph 2")
 
     ged = ged(G1, G2)
     print(f"Graph Edit Distance: {ged}")
