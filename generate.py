@@ -140,7 +140,7 @@ if __name__ == '__main__':
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
 
     # get checkpoint of best model
-    chkpt_path = "./trained_models/decoder_transformer_2025_06_11_14_06_e29"
+    chkpt_path = "./trained_models/decoder_transformer_2025_06_11_18_06_e29"
     chkpt = torch.load(chkpt_path, weights_only=False, map_location=torch.device(device))
 
     # set model configuration
@@ -184,24 +184,11 @@ if __name__ == '__main__':
         pred_seq_argmax = argmax_sample(decoder=decoder, trg_vocab=trg_vocab, device=device, src_seq=src_seq, max_steps=100)
         pred_seq_smart = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
 
-
         # accuracy bookkeeping
         if torch.equal(trg_seq, pred_seq_argmax):
             correct_argmax += 1
         if torch.equal(trg_seq, pred_seq_smart):
             correct_smart += 1
-        
-        if not torch.equal(pred_seq_argmax, pred_seq_smart) and torch.equal(pred_seq_argmax, trg_seq):
-            src_str = " ".join(src_vocab.idx2text(src_seq.to('cpu').numpy()))
-            argmax_str = " ".join(trg_vocab.idx2text(pred_seq_argmax.to('cpu').numpy()))
-            smart_str = " ".join(trg_vocab.idx2text(pred_seq_smart.to('cpu').numpy()))
-            trg_str = " ".join(trg_vocab.idx2text(trg_seq.to('cpu').numpy()))
-            
-            print("problem: " + src_str)
-            print("argmax: " + argmax_str)
-            print("smart: " + smart_str)
-            print("target: " + trg_str)
-            print("")
         
         pbar.update(1)
     

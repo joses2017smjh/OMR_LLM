@@ -40,7 +40,7 @@ class ProblemVocab:
 
         # remove numbers as tokens, genearlize to <NUM>
         for token in tokens:
-            if token.isdigit():
+            if self.is_number(token.replace(',', '')):
                 tokens.remove(token)
 
         word2idx = {t:i+5 for i,t in enumerate(tokens)}
