@@ -16,8 +16,15 @@ class ProblemVocab:
     def __len__(self):
         return len(self.word2idx)
 
+    def is_number(self, string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
+
     def text2idx(self, text):
-        tokens = [str(x).strip().lower() if not str(x).isdigit() else '<NUM>' for x in self.tokenizer(text)]
+        tokens = [str(x).strip().lower() if not self.is_number(str(x).replace(',', '')) else '<NUM>' for x in self.tokenizer(text)]
         return [self.word2idx[t] if t in self.word2idx.keys() else self.word2idx['<UNK>'] for t in tokens]
 
     def idx2text(self, idxs):

@@ -12,6 +12,9 @@ from models.DecoderTransformer import DecoderTransformer
 
 
 def argmax_sample(decoder, trg_vocab, device, src_seq, max_steps):
+
+    decoder.eval()
+
     # start generated sequence with <SOS>
     curr_seq = torch.ones((1,), dtype=int).to(device)
 
@@ -35,6 +38,9 @@ def argmax_sample(decoder, trg_vocab, device, src_seq, max_steps):
 
 def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
 
+    decoder.eval()
+
+    # keep track of sections of vocab
     operation_range = (2, 56)
     const_range = (56, 90)
     num_ref_range = (90, 190)
@@ -130,8 +136,6 @@ if __name__ == '__main__':
     src_vocab_len = len(src_vocab)
     trg_vocab_len = len(trg_vocab)
 
-    print(trg_vocab.idx2word)
-
     # get device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
 
@@ -180,7 +184,14 @@ if __name__ == '__main__':
         pred_seq_argmax = argmax_sample(decoder=decoder, trg_vocab=trg_vocab, device=device, src_seq=src_seq, max_steps=100)
         pred_seq_smart = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
 
-        if not torch.equal(pred_seq_argmax, pred_seq_smart):
+
+        # accuracy bookkeeping
+        if torch.equal(trg_seq, pred_seq_argmax):
+            correct_argmax += 1
+        if torch.equal(trg_seq, pred_seq_smart):
+            correct_smart += 1
+        
+        if not torch.equal(pred_seq_argmax, pred_seq_smart) and torch.equal(pred_seq_argmax, trg_seq):
             src_str = " ".join(src_vocab.idx2text(src_seq.to('cpu').numpy()))
             argmax_str = " ".join(trg_vocab.idx2text(pred_seq_argmax.to('cpu').numpy()))
             smart_str = " ".join(trg_vocab.idx2text(pred_seq_smart.to('cpu').numpy()))
@@ -191,30 +202,8 @@ if __name__ == '__main__':
             print("smart: " + smart_str)
             print("target: " + trg_str)
             print("")
-
-
-        # accuracy bookkeeping
-        if torch.equal(trg_seq, pred_seq_argmax):
-            correct_argmax += 1
-        if torch.equal(trg_seq, pred_seq_smart):
-            correct_smart += 1
         
         pbar.update(1)
-
-        # print("Example " + str(idx.item()))
-        # print("Word problem:")
-        # word_problem = " ".join(src_vocab.idx2text(src_seq.to('cpu').numpy()))
-        # print(word_problem)
-
-        # print("True linear formula")
-        # tru_lin_form = " ".join(trg_vocab.idx2text(trg_seq.to('cpu').numpy()))
-        # print(tru_lin_form)
-
-        # print("Predicted linear formula")
-        # pred_lin_form = " ".join(trg_vocab.idx2text(curr_seq.to('cpu').numpy()))
-        # print(pred_lin_form)
-        
-        # print("")
     
     print("argmax accuracy: " + str(correct_argmax/num_samples))
     print("smart accuracy: " + str(correct_smart/num_samples))
