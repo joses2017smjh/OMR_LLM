@@ -110,48 +110,28 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
 
     return curr_seq
 
-def compute_bleu(pred_seq: torch.Tensor,
-                  ref_seq:  torch.Tensor, pad_token: int = 0, eos_token: int = 2, n_gram:    int = 3) -> float:
-    # 1) Turn IDs → token strings, and strip SOS/EOS/PAD
-    def clean_and_map(id_list):
-        # drop SOS (1), PAD (0), cut at EOS (2)
-        if id_list and id_list[0] == 1:
-            id_list = id_list[1:]
-        if 2 in id_list:
-            id_list = id_list[:id_list.index(2)]
-        return [trg_vocab.idx2word[i] for i in id_list if i != 0]
 
-    pred_ids = pred_seq.tolist()
-    ref_ids  = ref_seq.tolist()
-    pred_tokens = clean_and_map(pred_ids)
-    ref_tokens  = clean_and_map(ref_ids)
+def compute_bleu(trg_vocab, pred_seq, trg_seq, n_gram=2):
 
-    # 2) Build the “sentences” for Torcheval:
-    candidate = [" ".join(pred_tokens)]
-    reference = [[" ".join(ref_tokens)]]
+    # clean up predicted and target sequences (strip <SOS>, <EOS>)
+    pred_seq = pred_seq[1:-1]
+    trg_seq = trg_seq[1:-1]
 
-    # 3) Call BLEU with the right arg name:
-    Lp, Lr = len(pred_tokens), len(ref_tokens)
-    # If either side is shorter than n_gram, fall back to BLEU-1
-    use_n = n_gram if (Lp >= n_gram and Lr >= n_gram) else 1
+    # compose sequences into strings
+    pred_words = " ".join(trg_vocab.idx2text(pred_seq.to('cpu').numpy()))
+    trg_words = " ".join(trg_vocab.idx2text(trg_seq.to('cpu').numpy()))
 
-    # 4) pad the shorter list up to the longer
-    L = max(Lp, Lr)
-    pred_tokens += [pad_token] * (L - Lp)
-    ref_tokens  += [pad_token] * (L - Lr)
+    # get lengths
+    pred_len = len(pred_words)
+    trg_len = len(trg_words)
 
-    # 5) wrap into Torcheval’s batch format:
-    #    candidate: [“t1 t2 …”]
-    #    reference: [[“r1 r2 …”]]
-    candidate = [" ".join(map(str, pred_tokens))]
-    reference = [[ " ".join(map(str, ref_tokens)) ]]
+    # revert to unigram if sequences shorter than given n
+    n_gram = n_gram if (pred_len >= n_gram and trg_len >= n_gram) else 1
 
-    try:
-        score = bleu_score(candidate, reference, n_gram=use_n)
-        return score.item()
-    except ValueError:
-        # worst case: give zero if something still fails
-        return 0.0
+    # compute BLEU score
+    score = bleu_score([pred_words], [trg_words], n_gram=n_gram)
+    return score.item()
+
 
 if __name__ == '__main__':
     
@@ -210,8 +190,12 @@ if __name__ == '__main__':
     # keep track of accuracy
     correct_argmax = 0
     correct_smart = 0
+
+    # keep track of BLEU score
     total_bleu_argmax = 0.0
     total_bleu_smart  = 0.0
+
+    # keep track of GED
     ged_smart = 0
     ged_argmax = 0
 
@@ -228,38 +212,34 @@ if __name__ == '__main__':
         pred_seq_argmax = argmax_sample(decoder=decoder, trg_vocab=trg_vocab, device=device, src_seq=src_seq, max_steps=100)
         pred_seq_smart = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
 
-        # Computing BLEU scores        
-        bleu_argmax = compute_bleu(pred_seq_argmax, trg_seq )
-        bleu_smart  = compute_bleu(pred_seq_smart,  trg_seq)
-        total_bleu_argmax += bleu_argmax
-        total_bleu_smart  += bleu_smart
-
-        pred_str_argmax = trg_vocab.idx2text(pred_seq_argmax[1:-1].to('cpu').numpy())
-        
-        pred_str_smart = trg_vocab.idx2text(pred_seq_smart[1:-1].to('cpu').numpy())
-        trg_str = trg_vocab.idx2text(trg_seq[1:-1].to('cpu').numpy())
-
-        ged_smart += compute(trg_str, pred_str_smart)
-        ged_argmax += compute(trg_str, pred_str_argmax)
-
-        
         # accuracy bookkeeping
         if torch.equal(trg_seq, pred_seq_argmax):
             correct_argmax += 1
         if torch.equal(trg_seq, pred_seq_smart):
             correct_smart += 1
+
+        # BLEU score bookkeeping
+        total_bleu_argmax += compute_bleu(trg_vocab, pred_seq_argmax, trg_seq)
+        total_bleu_smart += compute_bleu(trg_vocab, pred_seq_smart, trg_seq)
+
+        # pred_str_argmax = trg_vocab.idx2text(pred_seq_argmax[1:-1].to('cpu').numpy())
+        # pred_str_smart = trg_vocab.idx2text(pred_seq_smart[1:-1].to('cpu').numpy())
+        # trg_str = trg_vocab.idx2text(trg_seq[1:-1].to('cpu').numpy())
+
+        # ged_smart += compute(trg_str, pred_str_smart)
+        # ged_argmax += compute(trg_str, pred_str_argmax)
             
         pbar.update(1)
     
 
-    print("argmax accuracy: " + str(correct_argmax/num_samples))
-    print("smart accuracy: " + str(correct_smart/num_samples))
-    avg_bleu_argmax = total_bleu_argmax / num_samples
-    avg_bleu_smart  = total_bleu_smart  / num_samples
-    print("argmax average BLEU: " + str(avg_bleu_argmax))
-    print("smart average BLEU: " + str(avg_bleu_smart))
-    print("argmax average GED: " + str(ged_argmax / num_samples))
-    print("smart average GED: " + str(ged_smart / num_samples))
+    print("argmax accuracy:\t" + str(correct_argmax/num_samples))
+    print("smart accuracy:\t" + str(correct_smart/num_samples))
+
+    print("argmax average BLEU:\t" + str(total_bleu_argmax/num_samples))
+    print("smart average BLEU:\t" + str(total_bleu_smart/num_samples))
+
+    # print("argmax average GED: " + str(ged_argmax/num_samples))
+    # print("smart average GED: " + str(ged_smart/num_samples))
 
 
     pbar.close()
