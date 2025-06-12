@@ -111,7 +111,7 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
     return curr_seq
 
 
-def compute_bleu(trg_vocab, pred_seq, trg_seq, n_gram=2):
+def compute_bleu(trg_vocab, pred_seq, trg_seq, n_gram=3):
 
     # clean up predicted and target sequences (strip <SOS>, <EOS>)
     pred_seq = pred_seq[1:-1]
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     print("Model has: " + str(trainable_params) + " trainable parameters")
 
     # randomly sample problems from test dataset
-    num_samples = 100
+    num_samples = 10
     sample_idx = torch.randperm(len(test_set))[:num_samples]
 
     # keep track of accuracy
@@ -222,12 +222,14 @@ if __name__ == '__main__':
         total_bleu_argmax += compute_bleu(trg_vocab, pred_seq_argmax, trg_seq)
         total_bleu_smart += compute_bleu(trg_vocab, pred_seq_smart, trg_seq)
 
-        # pred_str_argmax = trg_vocab.idx2text(pred_seq_argmax[1:-1].to('cpu').numpy())
-        # pred_str_smart = trg_vocab.idx2text(pred_seq_smart[1:-1].to('cpu').numpy())
-        # trg_str = trg_vocab.idx2text(trg_seq[1:-1].to('cpu').numpy())
+        # convert to list of strings
+        pred_str_argmax = trg_vocab.idx2text(pred_seq_argmax[1:-1].to('cpu').numpy())
+        pred_str_smart = trg_vocab.idx2text(pred_seq_smart[1:-1].to('cpu').numpy())
+        trg_str = trg_vocab.idx2text(trg_seq[1:-1].to('cpu').numpy())
 
-        # ged_smart += compute(trg_str, pred_str_smart)
-        # ged_argmax += compute(trg_str, pred_str_argmax)
+        # GED bookkeeping
+        ged_smart += compute(trg_str, pred_str_smart)
+        ged_argmax += compute(trg_str, pred_str_argmax)
             
         pbar.update(1)
     
@@ -238,8 +240,8 @@ if __name__ == '__main__':
     print("argmax average BLEU:\t" + str(total_bleu_argmax/num_samples))
     print("smart average BLEU:\t" + str(total_bleu_smart/num_samples))
 
-    # print("argmax average GED: " + str(ged_argmax/num_samples))
-    # print("smart average GED: " + str(ged_smart/num_samples))
+    print("argmax average GED: " + str(ged_argmax/num_samples))
+    print("smart average GED: " + str(ged_smart/num_samples))
 
 
     pbar.close()

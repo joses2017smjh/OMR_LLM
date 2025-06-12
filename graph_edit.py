@@ -4,46 +4,46 @@ from networkx.algorithms.similarity import graph_edit_distance
 
 import json
 
+
+# get loookup table for operations and number of inputs
 with open('data/operations.json', 'r') as file:
         op_dict = json.load(file)
 
 
-
 def check_node(G, arg):
+
+    # only entities without inputs are constants and number references
     if not G.has_node(arg):
         if arg.startswith("const_"):
             G.add_node(arg, label="const")
         elif arg.startswith("n"):
-            G.add_node(arg, label="Num_ref")
+            G.add_node(arg, label="num_ref")
+        
         # elif arg.startswith("#"):
         #     G.add_node(arg, label="op_output")
         # else:
         #     G.add_node(arg, label="input")
+    
+    return G
 
 
 def build_dag(linear_string):
 
     G = nx.DiGraph()
 
-    operands = 0
-    id = 0
+    id = -1
 
     for token in linear_string:
-        op_id = f"#{id}"
 
         if token in op_dict:
-            operands = op_dict[token]
-            G.add_node(op_id, label=token)
+            id += 1
+            G.add_node(f"#{id}", label=token)
             
         else:
-            check_node(G, token)
-            G.add_edge(token, op_id, label=token)
-            operands -= 1
-            if operands == 0:
-                id += 1
+            G = check_node(G, token)
+            G.add_edge(token, f"#{id}", label=token)
 
     return G
-
 
 
 def draw_dag(G, title="Graph"):
