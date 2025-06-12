@@ -1,319 +1,0 @@
-Loading MathQA train dataset
-Building source vocab
-Loading MathQA test dataset
-Loading MathQA validation dataset
-{0: '<PAD>', 1: '<SOS>', 2: '<EOS>', 3: 'add', 4: 'subtract', 5: 'multiply', 6: 'divide', 7: 'log', 8: 'sqrt', 9: 'factorial', 10: 'gcd', 11: 'lcm', 12: 'power', 13: 'max', 14: 'min', 15: 'reminder', 16: 'negate', 17: 'inverse', 18: 'floor', 19: 'sine', 20: 'cosine', 21: 'tangent', 22: 'circle_area', 23: 'circumface', 24: 'rectangle_perimeter', 25: 'rectangle_area', 26: 'square_perimeter', 27: 'square_area', 28: 'rhombus_perimeter', 29: 'rhombus_area', 30: 'quadrilateral_area', 31: 'volume_cone', 32: 'volume_rectangular_prism', 33: 'volume_cube', 34: 'volume_sphere', 35: 'volume_cylinder', 36: 'surface_cylinder', 37: 'surface_cube', 38: 'surface_rectangular_prism', 39: 'surface_sphere', 40: 'cube_edge_by_volume', 41: 'diagonal', 42: 'square_edge_by_perimeter', 43: 'square_edge_by_area', 44: 'triangle_perimeter', 45: 'triangle_area', 46: 'triangle_area_three_edges', 47: 'negate_prob', 48: 'permutation', 49: 'p_after_gain', 50: 'original_price_before_gain', 51: 'original_price_before_loss', 52: 'speed', 53: 'speed_in_still_water', 54: 'stream_speed', 55: 'choose', 56: 'const_pi', 57: 'const_2', 58: 'const_1', 59: 'const_3', 60: 'const_4', 61: 'const_6', 62: 'const_10', 63: 'const_12', 64: 'const_100', 65: 'const_1000', 66: 'const_60', 67: 'const_3600', 68: 'const_1_6', 69: 'const_0_6', 70: 'const_0_2778', 71: 'const_0_3937', 72: 'const_3_6', 73: 'const_deg_to_rad', 74: 'const_52', 75: 'const_180', 76: 'const_360', 77: 'const_0_25', 78: 'const_0_33', 79: 'const_5', 80: 'const_26', 81: 'const_2_0', 82: 'const_2_54', 83: 'const_0_4535', 84: 'const_2_2046', 85: 'const_3_0', 86: 'const_4_0', 87: 'const_60_0', 88: 'const_100_0', 89: 'const_0_5', 90: 'n0', 91: 'n1', 92: 'n2', 93: 'n3', 94: 'n4', 95: 'n5', 96: 'n6', 97: 'n7', 98: 'n8', 99: 'n9', 100: 'n10', 101: 'n11', 102: 'n12', 103: 'n13', 104: 'n14', 105: 'n15', 106: 'n16', 107: 'n17', 108: 'n18', 109: 'n19', 110: 'n20', 111: 'n21', 112: 'n22', 113: 'n23', 114: 'n24', 115: 'n25', 116: 'n26', 117: 'n27', 118: 'n28', 119: 'n29', 120: 'n30', 121: 'n31', 122: 'n32', 123: 'n33', 124: 'n34', 125: 'n35', 126: 'n36', 127: 'n37', 128: 'n38', 129: 'n39', 130: 'n40', 131: 'n41', 132: 'n42', 133: 'n43', 134: 'n44', 135: 'n45', 136: 'n46', 137: 'n47', 138: 'n48', 139: 'n49', 140: 'n50', 141: 'n51', 142: 'n52', 143: 'n53', 144: 'n54', 145: 'n55', 146: 'n56', 147: 'n57', 148: 'n58', 149: 'n59', 150: 'n60', 151: 'n61', 152: 'n62', 153: 'n63', 154: 'n64', 155: 'n65', 156: 'n66', 157: 'n67', 158: 'n68', 159: 'n69', 160: 'n70', 161: 'n71', 162: 'n72', 163: 'n73', 164: 'n74', 165: 'n75', 166: 'n76', 167: 'n77', 168: 'n78', 169: 'n79', 170: 'n80', 171: 'n81', 172: 'n82', 173: 'n83', 174: 'n84', 175: 'n85', 176: 'n86', 177: 'n87', 178: 'n88', 179: 'n89', 180: 'n90', 181: 'n91', 182: 'n92', 183: 'n93', 184: 'n94', 185: 'n95', 186: 'n96', 187: 'n97', 188: 'n98', 189: 'n99', 190: '#0', 191: '#1', 192: '#2', 193: '#3', 194: '#4', 195: '#5', 196: '#6', 197: '#7', 198: '#8', 199: '#9', 200: '#10', 201: '#11', 202: '#12', 203: '#13', 204: '#14', 205: '#15', 206: '#16', 207: '#17', 208: '#18', 209: '#19', 210: '#20', 211: '#21', 212: '#22', 213: '#23', 214: '#24', 215: '#25', 216: '#26', 217: '#27', 218: '#28', 219: '#29', 220: '#30', 221: '#31', 222: '#32', 223: '#33', 224: '#34', 225: '#35', 226: '#36', 227: '#37', 228: '#38', 229: '#39', 230: '#40', 231: '#41', 232: '#42', 233: '#43', 234: '#44', 235: '#45', 236: '#46', 237: '#47', 238: '#48', 239: '#49', 240: '#50', 241: '#51', 242: '#52', 243: '#53', 244: '#54', 245: '#55', 246: '#56', 247: '#57', 248: '#58', 249: '#59', 250: '#60', 251: '#61', 252: '#62', 253: '#63', 254: '#64', 255: '#65', 256: '#66', 257: '#67', 258: '#68', 259: '#69', 260: '#70', 261: '#71', 262: '#72', 263: '#73', 264: '#74', 265: '#75', 266: '#76', 267: '#77', 268: '#78', 269: '#79', 270: '#80', 271: '#81', 272: '#82', 273: '#83', 274: '#84', 275: '#85', 276: '#86', 277: '#87', 278: '#88', 279: '#89', 280: '#90', 281: '#91', 282: '#92', 283: '#93', 284: '#94', 285: '#95', 286: '#96', 287: '#97', 288: '#98', 289: '#99'}
-Model has: 12086562 trainable parameters
-Test Problems:   0%|          | 0/100 [00:00<?, ?example/s]Test Problems:   1%|          | 1/100 [00:00<00:32,  3.08example/s]Test Problems:   2%|▏         | 2/100 [00:00<00:22,  4.45example/s]Test Problems:   4%|▍         | 4/100 [00:00<00:11,  8.56example/s]Test Problems:   6%|▌         | 6/100 [00:00<00:11,  8.41example/s]Test Problems:   8%|▊         | 8/100 [00:01<00:12,  7.52example/s]Test Problems:  10%|█         | 10/100 [00:01<00:09,  9.29example/s]Test Problems:  12%|█▏        | 12/100 [00:01<00:08, 10.00example/s]Test Problems:  14%|█▍        | 14/100 [00:01<00:10,  8.33example/s]Test Problems:  15%|█▌        | 15/100 [00:02<00:12,  6.83example/s]Test Problems:  17%|█▋        | 17/100 [00:02<00:10,  7.99example/s]Test Problems:  18%|█▊        | 18/100 [00:02<00:10,  7.51example/s]Test Problems:  20%|██        | 20/100 [00:02<00:08,  9.29example/s]Test Problems:  22%|██▏       | 22/100 [00:02<00:08,  9.61example/s]Test Problems:  24%|██▍       | 24/100 [00:02<00:07, 10.36example/s]Test Problems:  26%|██▌       | 26/100 [00:02<00:06, 11.17example/s]Test Problems:  28%|██▊       | 28/100 [00:03<00:06, 11.30example/s]Test Problems:  30%|███       | 30/100 [00:03<00:07,  9.93example/s]Test Problems:  32%|███▏      | 32/100 [00:03<00:07,  8.94example/s]Test Problems:  34%|███▍      | 34/100 [00:03<00:06,  9.76example/s]Test Problems:  36%|███▌      | 36/100 [00:04<00:07,  9.11example/s]Test Problems:  38%|███▊      | 38/100 [00:04<00:07,  8.85example/s]Test Problems:  40%|████      | 40/100 [00:04<00:05, 10.15example/s]Test Problems:  42%|████▏     | 42/100 [00:04<00:05, 10.18example/s]Test Problems:  44%|████▍     | 44/100 [00:04<00:05, 11.15example/s]Test Problems:  46%|████▌     | 46/100 [00:04<00:04, 11.50example/s]Test Problems:  48%|████▊     | 48/100 [00:05<00:04, 12.48example/s]Test Problems:  50%|█████     | 50/100 [00:05<00:04, 12.28example/s]Test Problems:  52%|█████▏    | 52/100 [00:05<00:04,  9.98example/s]Test Problems:  54%|█████▍    | 54/100 [00:05<00:04, 10.78example/s]Test Problems:  56%|█████▌    | 56/100 [00:05<00:03, 11.30example/s]Test Problems:  58%|█████▊    | 58/100 [00:06<00:04, 10.21example/s]Test Problems:  60%|██████    | 60/100 [00:06<00:03, 10.78example/s]Test Problems:  62%|██████▏   | 62/100 [00:06<00:03, 11.63example/s]Test Problems:  64%|██████▍   | 64/100 [00:06<00:03,  9.94example/s]Test Problems:  66%|██████▌   | 66/100 [00:06<00:03, 10.21example/s]Test Problems:  69%|██████▉   | 69/100 [00:07<00:02, 12.53example/s]Test Problems:  71%|███████   | 71/100 [00:07<00:02, 12.77example/s]Test Problems:  73%|███████▎  | 73/100 [00:07<00:02, 12.94example/s]Test Problems:  75%|███████▌  | 75/100 [00:07<00:02, 11.51example/s]Test Problems:  77%|███████▋  | 77/100 [00:07<00:01, 11.98example/s]Test Problems:  79%|███████▉  | 79/100 [00:07<00:01, 12.33example/s]Test Problems:  81%|████████  | 81/100 [00:08<00:01, 12.15example/s]Test Problems:  83%|████████▎ | 83/100 [00:08<00:01, 13.13example/s]Test Problems:  85%|████████▌ | 85/100 [00:08<00:01, 10.01example/s]Test Problems:  87%|████████▋ | 87/100 [00:08<00:01,  9.89example/s]Test Problems:  90%|█████████ | 90/100 [00:08<00:00, 13.11example/s]Test Problems:  92%|█████████▏| 92/100 [00:08<00:00, 11.67example/s]Test Problems:  94%|█████████▍| 94/100 [00:09<00:00, 10.47example/s]Test Problems:  97%|█████████▋| 97/100 [00:09<00:00, 10.67example/s]Test Problems:  99%|█████████▉| 99/100 [00:09<00:00, 10.40example/s]Test Problems: 100%|██████████| 100/100 [00:09<00:00, 10.27example/s]
-problem: <SOS> the average of <NUM> result is <NUM> . average of the first <NUM> of them is <NUM> and that of the last <NUM> is <NUM> . find the <NUM> th result ? <EOS>
-argmax: <SOS> multiply n2 n3 multiply n2 n5 multiply n0 n1 add #0 #1 subtract #3 #2 <EOS>
-smart: <SOS> multiply n2 n5 multiply n2 n5 multiply n0 n1 add #0 #1 subtract #3 #2 <EOS>
-target: <SOS> multiply n2 n3 multiply n2 n5 multiply n0 n1 add #0 #1 subtract #3 #2 <EOS>
-
-problem: <SOS> <UNK> a <UNK> every <NUM> seconds , <UNK> b <UNK> every <NUM> seconds , <UNK> c <UNK> every <NUM> seconds . at a certain <UNK> of time all <NUM> <UNK> <UNK> simultaneously . during the period of <NUM> minutes after that how many times will exactly two <UNK> <UNK> ? ( <UNK> <UNK> any <UNK> of exactly two <UNK> which occurs at the <NUM> minute mark . ) <EOS>
-argmax: <SOS> divide n0 n0 multiply n3 const_60 multiply n0 #1 subtract #0 #2 <EOS>
-smart: <SOS> divide n2 n0 divide n2 n0 multiply n3 const_60 multiply #0 #1 multiply #3 const_60 multiply #4 const_60 multiply #2 #5 subtract #6 #1 <EOS>
-target: <SOS> lcm n0 n1 lcm n0 n2 lcm n1 n2 multiply n0 const_60 divide #3 #0 divide #3 #1 divide #3 #2 lcm n2 #0 add #4 #5 divide #3 #7 add #8 #6 multiply n3 #9 subtract #10 #11 <EOS>
-
-problem: <SOS> a shopkeeper bought <NUM> oranges and <NUM> bananas . he found <NUM> % of oranges and <NUM> % of bananas were <UNK> . find the percentage of <UNK> in good condition ? <EOS>
-argmax: <SOS> add n0 n1 divide n2 const_100 divide n3 const_100 multiply n0 #1 multiply n1 #2 add #3 #4 subtract #0 #5 divide #6 #0 multiply #7 const_100 <EOS>
-smart: <SOS> add n0 n1 divide n3 const_100 divide n2 const_100 multiply n0 #1 multiply n1 #2 add #3 #4 subtract #0 #5 divide #6 #0 multiply #7 const_100 <EOS>
-target: <SOS> add n0 n1 divide n2 const_100 divide n3 const_100 multiply n0 #1 multiply n1 #2 add #3 #4 subtract #0 #5 divide #6 #0 multiply #7 const_100 <EOS>
-
-problem: <SOS> <NUM> <UNK> are taken of from a container full of liquid a and replaced with liquid b . again <NUM> more <UNK> of the mixture is taken and replaced with liquid b . after this process , if the container contains liquid a and b in the ratio <NUM> : <NUM> , what is the capacity of the container h ? <EOS>
-argmax: <SOS> add n2 n3 divide n2 #0 sqrt #1 subtract const_1 #2 divide n0 #3 <EOS>
-smart: <SOS> add n2 n3 divide n1 #0 sqrt #1 subtract const_1 #2 divide n2 #3 <EOS>
-target: <SOS> add n2 n3 divide n2 #0 sqrt #1 subtract const_1 #2 divide n0 #3 <EOS>
-
-problem: <SOS> a <UNK> selling a boat along river <UNK> . if he sell boat in <UNK> water at <NUM> m / sec and <UNK> of river is <NUM> m / sec . how much time he will take to sell <NUM> m . <EOS>
-argmax: <SOS> add n1 n2 divide n0 n1 subtract #1 #0 <EOS>
-smart: <SOS> add n1 n2 subtract n0 n1 divide n2 #0 divide #2 #1 <EOS>
-target: <SOS> add n0 n1 divide n2 #0 <EOS>
-
-problem: <SOS> a cycle is bought for rs . <NUM> and sold for rs . <NUM> , find the gain percent ? <EOS>
-argmax: <SOS> subtract n1 n0 divide #0 const_3 divide #1 n0 multiply #2 const_100 <EOS>
-smart: <SOS> subtract n1 n0 divide #0 n0 multiply #1 const_100 <EOS>
-target: <SOS> subtract n1 n0 divide #0 n0 multiply #1 const_100 <EOS>
-
-problem: <SOS> <UNK> travelling to <NUM> <UNK> . gasoline prices <UNK> from city to city . $ <UNK> , $ <UNK> , $ <UNK> , $ <UNK> , $ <UNK> , $ <UNK> , $ <UNK> . what is the median gasoline price ? <EOS>
-argmax: <SOS> add n1 n2 add n3 #0 add n4 #1 add n5 #2 divide #3 n0 subtract n1 #4 <EOS>
-smart: <SOS> add const_3 const_4 add const_2 const_4 add #0 const_10 add #1 const_100 add #3 const_100 add #4 #2 add #5 const_1 add #6 #1 <EOS>
-target: <SOS> add n1 n2 add n3 #0 add n4 #1 add n5 #2 add n6 #3 add n7 #4 divide #5 n0 min n7 #6 <EOS>
-
-problem: <SOS> a man is walking at a speed of <NUM> km per hour . after every <UNK> , he takes rest for <NUM> minutes . how much time will be take to cover a distance of <NUM> <UNK> ? <EOS>
-argmax: <SOS> divide n1 n0 multiply n1 const_4 speed const_60 const_1 add #0 #2 add #3 #1 <EOS>
-smart: <SOS> divide n1 n0 multiply n1 const_4 speed const_60 const_1 multiply #0 #2 add #3 #1 <EOS>
-target: <SOS> divide n1 n0 multiply n1 const_4 speed const_60 const_1 multiply #0 #2 add #3 #1 <EOS>
-
-problem: <SOS> the length of a room is 5.5 m and width is <UNK> m . find the cost of paying the floor by slabs at the rate of rs . <NUM> per sq . metre . <EOS>
-argmax: <SOS> multiply n0 n1 multiply n2 #0 <EOS>
-smart: <SOS> multiply n0 n0 multiply const_4_0 const_1000 multiply const_4_0 #0 subtract #1 #2 <EOS>
-target: <SOS> multiply n0 n1 multiply n2 #0 <EOS>
-
-problem: <SOS> if x is a positive number and <NUM> / <NUM> the square root of x is equal to <NUM> x , then x = <EOS>
-argmax: <SOS> multiply n1 n2 power n1 #0 <EOS>
-smart: <SOS> multiply n1 n2 power #0 n0 divide #1 const_3 <EOS>
-target: <SOS> multiply n1 const_3 power n1 #0 <EOS>
-
-problem: <SOS> calculate the share of y , if rs . <NUM> is divided among x , y and z in the ratio <NUM> : <NUM> : <NUM> ? <EOS>
-argmax: <SOS> add n1 n2 add n3 #0 divide n0 #1 multiply n0 #2 <EOS>
-smart: <SOS> add n1 n2 add n3 #0 divide n0 #1 multiply n1 #2 <EOS>
-target: <SOS> add n1 n2 add n3 #0 divide n0 #1 multiply n1 #2 <EOS>
-
-problem: <SOS> the simple interest on rs . <NUM> for <NUM> months at the rate of <NUM> paise per <UNK> month is <EOS>
-argmax: <SOS> multiply n0 n1 multiply n2 #0 divide #1 const_100 divide #1 #2 <EOS>
-smart: <SOS> multiply n0 n1 multiply n2 #0 divide #1 const_100 divide #2 const_100 <EOS>
-target: <SOS> multiply n0 n1 multiply n2 #0 divide #1 const_100 <EOS>
-
-problem: <SOS> in a class of <NUM> students , <NUM> play baseball , <NUM> play cricket and <NUM> play football . <NUM> play both baseball and cricket , <NUM> play cricket and football and <NUM> play baseball and football . if <NUM> students do not play any of these given sports , how many students play exactly two of these sports ? <EOS>
-argmax: <SOS> add n1 n2 subtract #0 n4 subtract #1 n3 <EOS>
-smart: <SOS> add n1 n2 subtract #0 n4 subtract #1 n4 <EOS>
-target: <SOS> add n1 n2 add n4 n5 add n3 #0 add n6 #1 subtract #2 #3 add n7 #4 subtract n0 #5 subtract n4 #6 subtract n5 #6 subtract n6 #6 add #7 #8 add #10 #9 <EOS>
-
-problem: <SOS> the ratio of <NUM> numbers is <NUM> : <NUM> and their h . c . f . is <NUM> . their l . c . m . is ? <EOS>
-argmax: <SOS> power n0 n1 power n1 n1 power n2 n1 add #0 #1 add #3 #2 divide n3 #4 sqrt #5 multiply n2 #6 <EOS>
-smart: <SOS> power n0 n1 power n1 n1 power n2 n1 add #0 #1 add #3 #2 divide n3 #4 sqrt #5 add #6 #0 <EOS>
-target: <SOS> power n0 n1 power n1 n1 power n2 n1 add #0 #1 add #3 #2 divide n3 #4 sqrt #5 <EOS>
-
-problem: <SOS> a ferry can <UNK> <NUM> <UNK> of vehicles . <UNK> range in weight from <UNK> to <UNK> pounds . what is the greatest number of <UNK> that can be <UNK> <UNK> the ferry ? <EOS>
-argmax: <SOS> add const_1000 const_1000 multiply n0 const_2 add #0 #1 divide #2 const_100 <EOS>
-smart: <SOS> add const_1000 const_1000 multiply n0 const_2 add #0 const_100 multiply #1 const_1000 add #2 const_100 add #4 const_100 add #5 const_100 add #6 const_100 divide #3 #7 <EOS>
-target: <SOS> add const_100 const_1000 multiply n0 const_2 add #0 const_100 multiply #1 const_1000 add #2 const_100 add #4 const_100 add #5 const_100 add #6 const_100 divide #3 #7 <EOS>
-
-problem: <SOS> a boy goes to his school from his house at a speed of <NUM> km / hr and return at a speed of <NUM> km / hr . if he takes <NUM> hours in going and <UNK> , the distance between his house and school is ? <EOS>
-argmax: <SOS> multiply n0 n1 multiply n2 n2 add #0 #1 divide #2 n1 <EOS>
-smart: <SOS> multiply n0 n1 multiply n1 #0 divide #1 n1 <EOS>
-target: <SOS> divide n0 n1 add #0 const_1 divide n2 #1 multiply n0 #2 <EOS>
-
-problem: <SOS> a retailer marks her goods in such a way that the profit made by selling <NUM> articles is equal to the selling price of <NUM> articles . what is the percentage of profit made by the retailer ? <EOS>
-argmax: <SOS> add n0 const_100 multiply n1 const_100 divide #0 #1 multiply #2 const_100 <EOS>
-smart: <SOS> add n0 const_100 divide n0 const_2 multiply #0 #1 subtract #2 const_1 multiply #3 const_100 <EOS>
-target: <SOS> subtract n0 n1 divide n0 #0 subtract #1 const_1 multiply #2 const_100 <EOS>
-
-problem: <SOS> <UNK> drives from city a to city b . after two hours of driving she <UNK> that she covered <NUM> km and calculated that , if she <UNK> driving at the same speed , she would end up been <NUM> minutes late . so she increased her speed by <NUM> km / hr and she arrived at city b <NUM> minutes earlier than she planned . find the distance between <UNK> a and b . <EOS>
-argmax: <SOS> divide n1 n2 multiply n1 #0 subtract #1 #0 divide n0 #2 <EOS>
-smart: <SOS> multiply n1 n2 subtract n2 n0 divide #0 #1 multiply n0 #2 subtract #2 #3 divide #4 const_60 subtract #5 const_0_25 multiply #6 const_60 <EOS>
-target: <SOS> divide n3 const_60 divide n0 const_2 divide n1 const_60 add n2 #1 divide const_1 #1 divide n0 #3 divide const_1 #3 subtract #0 #5 subtract #4 #6 add #7 const_2 subtract #9 #2 divide #10 #8 add #11 const_100 <EOS>
-
-problem: <SOS> how many numbers between <NUM> and <NUM> are divisible by <NUM> , <NUM> , and <NUM> together ? <EOS>
-argmax: <SOS> multiply n2 n3 multiply n4 #0 <EOS>
-smart: <SOS> multiply n2 n3 multiply n4 #0 divide n1 #1 <EOS>
-target: <SOS> multiply n2 n3 multiply n4 #0 divide n1 #1 divide n0 #1 subtract #2 #3 <EOS>
-
-problem: <SOS> what least number must be added to <NUM> to obtain a number exactly divisible by <NUM> ? <EOS>
-argmax: <SOS> multiply n1 n2 subtract n0 const_1 divide #0 #1 <EOS>
-smart: <SOS> subtract n0 const_1 divide n1 #0 <EOS>
-target: <SOS> multiply const_10 const_4 add #0 const_2 multiply n1 #1 subtract #2 n0 <EOS>
-
-problem: <SOS> a taxi leaves point a <NUM> hours after a bus left the same <UNK> . the bus is traveling <NUM> mph slower than the taxi . find the speed of the taxi , if it <UNK> the bus in two hours . <EOS>
-argmax: <SOS> add n0 n1 multiply n0 n1 add #1 #1 subtract #0 n0 divide #2 #3 <EOS>
-smart: <SOS> add n0 n1 multiply n0 n1 divide #1 #0 <EOS>
-target: <SOS> add n0 n0 multiply n0 n1 add #1 #1 subtract #0 n0 divide #2 #3 <EOS>
-
-problem: <SOS> a <UNK> runs up a cylindrical post , in a perfect <UNK> path making one <UNK> for each rise of <NUM> feet . how many feet does the <UNK> travels if the post is <NUM> feet tall and <NUM> feet in circumference ? <EOS>
-argmax: <SOS> divide n1 n0 multiply n2 #0 add n2 #1 <EOS>
-smart: <SOS> divide n1 n0 multiply n2 #0 <EOS>
-target: <SOS> divide n1 n0 multiply n2 #0 <EOS>
-
-problem: <SOS> mary ' s income is <NUM> % more than tim ' s income and tim ' s income is <NUM> % less than <UNK> ' s income . what % of <UNK> ' s income is mary ' s income . <EOS>
-argmax: <SOS> divide n0 const_100 subtract const_100 n1 multiply #0 #1 add #2 #1 <EOS>
-smart: <SOS> subtract const_100 n0 subtract const_100 n1 add #0 #1 <EOS>
-target: <SOS> divide n0 const_100 subtract const_100 n1 multiply #0 #1 add #2 #1 <EOS>
-
-problem: <SOS> in a division sum , the quotient is <NUM> , the divisor <NUM> and the remainder <NUM> , find the dividend ? <EOS>
-argmax: <SOS> multiply n1 n2 add n3 #0 <EOS>
-smart: <SOS> multiply n0 n1 add n2 #0 <EOS>
-target: <SOS> multiply n0 n1 add n2 #0 <EOS>
-
-problem: <SOS> x is a positive integer less than <NUM> . when x is divided by <NUM> , the remainder is <NUM> ; when x is divided by <NUM> , the remainder is <NUM> . how many x are there ? <EOS>
-argmax: <SOS> multiply n1 const_3 multiply n3 n4 subtract #0 #1 <EOS>
-smart: <SOS> multiply n1 n2 multiply n3 #0 subtract #1 n0 <EOS>
-target: <SOS> reminder n1 n0 reminder n3 n0 reminder n2 n0 multiply n3 #0 add #3 #1 subtract #4 #2 <EOS>
-
-problem: <SOS> <NUM> x <NUM> + <NUM> x <NUM> = ? <EOS>
-argmax: <SOS> add n2 n5 multiply n0 n2 add #1 #0 subtract #2 n1 <EOS>
-smart: <SOS> add n2 n3 divide #0 const_2 <EOS>
-target: <SOS> power n1 n2 multiply n0 #0 <EOS>
-
-problem: <SOS> what will be the area of a semi - circle of <NUM> metres diameter ? <EOS>
-argmax: <SOS> divide n0 const_2 circle_area #0 divide #1 const_pi divide #2 const_2 <EOS>
-smart: <SOS> divide n0 const_2 divide #0 const_pi divide #1 const_pi divide #2 const_3 <EOS>
-target: <SOS> divide n0 const_2 circle_area #0 divide #1 const_2 <EOS>
-
-problem: <SOS> there are two cars . one is <NUM> miles north of the other . simultaneously , the car to the north is driven <UNK> at <NUM> miles per hour and the other car is driven <UNK> at <NUM> miles per hour . how many miles apart are the cars after <NUM> hours ? <EOS>
-argmax: <SOS> multiply n3 n4 multiply n1 n2 power n2 n0 multiply n1 add #0 #1 add #4 #2 sqrt #5 multiply #6 #3 add #7 #3 <EOS>
-smart: <SOS> multiply n2 n3 multiply n1 n3 add #0 #1 power #0 const_2 power #3 const_2 power #4 const_2 add #2 #5 sqrt #6 <EOS>
-target: <SOS> multiply n2 n3 multiply n1 n3 add #0 #1 power #0 const_2 power #2 const_2 add #4 #3 sqrt #5 <EOS>
-
-problem: <SOS> from a pack of <NUM> cards , two cards are drawn together at random . what is the probability that the one is <UNK> and other two is <UNK> ? <EOS>
-argmax: <SOS> choose n0 const_2 divide n0 const_4 multiply #1 #1 divide #2 #0 <EOS>
-smart: <SOS> divide n0 const_4 divide n0 const_4 multiply #0 #1 divide #2 const_2 <EOS>
-target: <SOS> choose n0 const_2 divide n0 const_4 multiply #1 #1 divide #2 #0 <EOS>
-
-problem: <SOS> how many of the positive <UNK> of <NUM> are also multiples of <NUM> not including <NUM> ? <EOS>
-argmax: <SOS> divide n0 n2 divide #0 const_3 subtract #1 const_3 divide #2 const_2 <EOS>
-smart: <SOS> divide n0 n1 divide #0 n2 divide #1 const_3 <EOS>
-target: <SOS> divide n0 n1 divide #0 const_2 divide #1 const_3 <EOS>
-
-problem: <SOS> find the constant k so that : - x <NUM> - ( k + <NUM> ) x - <NUM> = - ( x - <NUM> ) ( x - <NUM> ) <EOS>
-argmax: <SOS> add n0 n4 add n1 #0 <EOS>
-smart: <SOS> add n1 n3 add n0 n1 divide #0 #1 <EOS>
-target: <SOS> add n0 n4 add n1 #0 <EOS>
-
-problem: <SOS> <UNK> a <UNK> equation with <UNK> <UNK> of the <UNK> , solve for w . <UNK> answer as much as possible . ( <NUM> w + <NUM> ) / <NUM> + ( <NUM> w + <NUM> ) / <NUM> = <NUM> <EOS>
-argmax: <SOS> divide n1 n4 divide #0 n0 power #1 n0 subtract #2 n2 <EOS>
-smart: <SOS> sqrt n1 add #0 #0 power #1 n5 subtract #1 n1 divide #3 #2 <EOS>
-target: <SOS> multiply n1 n5 multiply n1 n4 multiply n1 n3 multiply n0 const_2 add #1 #0 add #2 #3 multiply n6 #0 subtract #6 #4 divide #7 #5 <EOS>
-
-problem: <SOS> a can complete a work in <NUM> days and b can do the same work in <NUM> days . if a after doing <NUM> days , leaves the work , find in how many days b will do the remaining work ? <EOS>
-argmax: <SOS> divide n0 n2 multiply n0 n2 add #1 #0 multiply n1 #2 <EOS>
-smart: <SOS> divide n0 n2 multiply n0 n2 add #0 #1 <EOS>
-target: <SOS> divide n0 n2 multiply n0 n2 add #0 #1 <EOS>
-
-problem: <SOS> <UNK> were purchased at <NUM> per <NUM> and sold at <NUM> per <UNK> . if <NUM> <UNK> were sold , what was the total profit made ? <EOS>
-argmax: <SOS> multiply n0 n5 multiply n1 n3 divide #0 #1 <EOS>
-smart: <SOS> multiply n0 n3 multiply n0 n1 divide #0 #1 <EOS>
-target: <SOS> divide n0 n1 subtract n2 #0 multiply n3 #1 <EOS>
-
-problem: <SOS> the ratio of the area of a square to that of the square drawn on its diagonal is <EOS>
-argmax: <SOS> sqrt const_2 divide const_1 #1 multiply #0 #2 inverse #3 multiply #4 const_100 <EOS>
-smart: <SOS> sqrt const_2 divide const_1 #0 power #1 const_2 <EOS>
-target: <SOS> sqrt const_2 divide const_1 #0 power #1 const_2 <EOS>
-
-problem: <SOS> two <UNK> can type up a <UNK> in 12.5 hours and <UNK> it in 7.5 hours . if mary needs <NUM> hours to type the <UNK> and jim needs <NUM> hours to <UNK> it alone , how many t hours will it take if jim types the <UNK> and mary <UNK> it immediately after he is done ? <EOS>
-argmax: <SOS> divide const_1 n0 divide const_1 n2 divide const_1 n1 divide const_1 n3 subtract #0 #1 subtract #2 #3 inverse #4 inverse #5 add #6 #7 <EOS>
-smart: <SOS> divide const_1 n0 divide const_1 n1 divide const_1 n0 subtract #0 #1 subtract #3 #2 divide const_1 #4 <EOS>
-target: <SOS> divide const_1 n0 divide const_1 n2 divide const_1 n1 divide const_1 n3 subtract #0 #1 subtract #2 #3 inverse #4 inverse #5 add #6 #7 <EOS>
-
-problem: <SOS> a batsman had a certain average of runs for <NUM> innings . in the <NUM> th innings , he made a score of <NUM> runs thereby increasing his average by <NUM> . what is his average after <NUM> innings ? <EOS>
-argmax: <SOS> multiply n0 n3 multiply n1 n2 subtract #0 #1 divide #2 n4 <EOS>
-smart: <SOS> multiply n0 n3 subtract n1 n0 subtract n2 #0 divide #2 #1 <EOS>
-target: <SOS> multiply n1 n3 subtract n2 #0 add n3 #1 <EOS>
-
-problem: <SOS> during a <UNK> <UNK> , a car rental company rented <NUM> - <UNK> of their vehicles , including two - <UNK> of the <NUM> <UNK> that it had . if <NUM> % of the vehicles are <NUM> <UNK> , then what percent of the vehicles that were not rented were not <NUM> <UNK> ? <EOS>
-argmax: <SOS> add n1 n2 divide n0 #0 multiply #1 const_100 multiply #2 const_100 <EOS>
-smart: <SOS> divide const_100 const_2 multiply n1 #0 subtract const_100 #1 divide #2 n0 multiply #3 const_100 <EOS>
-target: <SOS> add const_2 const_3 multiply n2 const_2 divide #1 #0 divide #2 n2 multiply #3 const_100 <EOS>
-
-problem: <SOS> if x is <NUM> percent greater than <NUM> , then x = <EOS>
-argmax: <SOS> divide n0 const_100 multiply n1 #0 add n2 #1 <EOS>
-smart: <SOS> divide n0 const_100 multiply n1 #0 add n1 #1 <EOS>
-target: <SOS> divide n0 const_100 multiply n1 #0 add n1 #1 <EOS>
-
-problem: <SOS> <NUM> x <NUM> = ? <EOS>
-argmax: <SOS> subtract n2 n1 multiply #0 const_3 <EOS>
-smart: <SOS> multiply n0 n1 <EOS>
-target: <SOS> divide n0 n1 multiply #0 const_100 <EOS>
-
-problem: <SOS> <UNK> and <UNK> questions : <UNK> . <NUM> <UNK> <UNK> <NUM> different <UNK> <UNK> to the <UNK> of a fencing <UNK> . assuming all <UNK> have an equal chance of winning , how many <UNK> are there with <UNK> to how a first - place and second - place <UNK> can be awarded ? <EOS>
-argmax: <SOS> divide const_1 n2 multiply n1 #0 multiply #0 #1 <EOS>
-smart: <SOS> multiply n0 n1 multiply n1 #0 <EOS>
-target: <SOS> subtract n1 const_1 multiply n0 #0 <EOS>
-
-problem: <SOS> if <NUM> machines can produce <NUM> units in <NUM> hours , how long would it take <NUM> machines to produce <NUM> units ? <EOS>
-argmax: <SOS> divide n1 n2 divide #0 n0 multiply n1 #1 divide n4 #2 <EOS>
-smart: <SOS> divide n1 n2 divide #0 n0 multiply #1 const_2 <EOS>
-target: <SOS> divide n1 n2 divide #0 n0 multiply n1 #1 divide n4 #2 <EOS>
-
-problem: <SOS> find the value of m <NUM> x <NUM> = m ? <EOS>
-argmax: <SOS> subtract n1 n2 multiply #0 n0 divide #1 const_2 <EOS>
-smart: <SOS> subtract n1 const_2_0 multiply #0 #0 <EOS>
-target: <SOS> subtract n1 const_4 multiply #0 n0 <EOS>
-
-problem: <SOS> yearly <UNK> to <UNK> <UNK> cost a company $ <UNK> . to make a <NUM> % cut in the <UNK> budget , how much less must be spent ? <EOS>
-argmax: <SOS> subtract const_100 n1 divide #0 const_100 multiply n0 #1 <EOS>
-smart: <SOS> subtract n0 const_1 divide #0 const_100 multiply #1 const_10 <EOS>
-target: <SOS> subtract const_100 n1 divide #0 const_100 multiply n0 #1 <EOS>
-
-problem: <SOS> on a certain day , orangeade was made by mixing a certain amount of orange juice with an equal amount of water . on the next day , orangeade was made by mixing the same amount of orange juice with twice the amount of water . on both days , all the orangeade that was made was sold . if the revenue from selling the orangeade was the same for both days and if the orangeade was sold at $ <UNK> per glass on the first day , what was the price per f glass on the second day ? <EOS>
-argmax: <SOS> add const_1 const_1 add const_1 const_2 multiply n0 #0 divide #2 #1 <EOS>
-smart: <SOS> add const_1 const_1 add const_1 const_2 multiply const_4_0 #0 divide #2 #1 <EOS>
-target: <SOS> add const_1 const_1 add const_1 const_2 multiply n0 #0 divide #2 #1 <EOS>
-
-problem: <SOS> if <NUM> ( p ' s capital ) = <NUM> ( q ' s capital ) = <NUM> ( r ' s capital ) , then out of the total profit of rs <NUM> , r will receive <EOS>
-argmax: <SOS> add n0 const_1 add n2 #0 add n2 #1 divide #2 n1 subtract #3 n0 <EOS>
-smart: <SOS> add n0 const_1 add n2 #0 add n2 #1 divide #2 n0 multiply n1 #3 <EOS>
-target: <SOS> add n0 const_1 add n2 #0 add n2 #1 add n1 #2 divide n1 #3 multiply n3 #4 <EOS>
-
-problem: <SOS> from a group of <NUM> boys and <NUM> girls , <NUM> children are to be randomly selected . what is the probability that <NUM> boys and <NUM> girls will be selected ? <EOS>
-argmax: <SOS> add n0 n0 choose n1 n2 choose #0 n2 divide #1 #2 <EOS>
-smart: <SOS> add n0 n0 choose n0 const_2 choose n0 const_2 subtract #1 n1 divide #3 #2 divide #0 #4 <EOS>
-target: <SOS> add n0 n0 choose n0 const_2 choose n0 const_2 choose #0 n2 multiply #1 #2 divide #4 #3 <EOS>
-
-problem: <SOS> an <UNK> loom <UNK> <UNK> metres of cloth every second . approximately , how many seconds will it take for the loom to <UNK> <NUM> metre of cloth ? <EOS>
-argmax: <SOS> divide n1 n0 <EOS>
-smart: <SOS> divide const_1 const_2 <EOS>
-target: <SOS> divide n1 n0 <EOS>
-
-problem: <SOS> a sum of money deposited at c . i . amounts to rs . <NUM> in <NUM> years and to rs . <NUM> in <NUM> years . find the rate percent ? <EOS>
-argmax: <SOS> subtract n2 n0 divide #0 n3 multiply #1 const_100 <EOS>
-smart: <SOS> subtract n2 n0 divide #0 n0 multiply #1 const_100 <EOS>
-target: <SOS> subtract n2 n0 divide #0 n0 multiply #1 const_100 <EOS>
-
-problem: <SOS> if length of a rectangle is equal to side of a square and breadth of rectangle is half of length . if area of square is <NUM> sq . m . calculate the area of rectangle ? <EOS>
-argmax: <SOS> divide n1 const_2 divide #0 n0 multiply #1 #0 <EOS>
-smart: <SOS> divide const_1 const_2 sqrt #0 multiply #1 const_2 rectangle_perimeter n0 #2 <EOS>
-target: <SOS> sqrt n0 divide #0 const_2 multiply #1 #0 <EOS>
-
-problem: <SOS> the sum of <NUM> consecutive integers is <NUM> . what is the greatest integer in the set ? <EOS>
-argmax: <SOS> subtract n0 n1 subtract n1 #0 divide #1 const_2 add #2 const_2 <EOS>
-smart: <SOS> subtract n0 n1 divide #0 const_2 add #1 const_2 <EOS>
-target: <SOS> subtract n0 const_10 subtract #0 const_2 divide #1 const_4 add #2 const_2 power #2 const_2 add #3 const_2 power #3 const_2 add #5 const_2 add #4 #6 power #5 const_2 power #7 const_2 add #9 #10 add #11 #8 <EOS>
-
-problem: <SOS> the area of a square garden is a square feet and the perimeter is p feet . if a = <NUM> p + <NUM> , what is the perimeter of the garden , in feet ? <EOS>
-argmax: <SOS> multiply n1 const_2 power n0 const_2 subtract #1 #0 sqrt #2 add n0 #3 <EOS>
-smart: <SOS> multiply n1 const_4 <EOS>
-target: <SOS> multiply n0 n1 add #0 const_10 subtract #1 const_0_25 subtract #2 const_0_25 <EOS>
-
-problem: <SOS> what is the <UNK> digit in the decimal equivalent of <NUM> / <NUM> ? <EOS>
-argmax: <SOS> divide n0 n1 multiply #0 const_3 <EOS>
-smart: <SOS> divide n0 n1 multiply #0 const_100 <EOS>
-target: <SOS> divide n0 n1 multiply #0 const_100 floor #1 <EOS>
-
-problem: <SOS> how many <NUM> - digits number are <UNK> numbers ? a <UNK> number reads the same <UNK> and <UNK> , example <NUM> . <EOS>
-argmax: <SOS> multiply const_2 const_3 multiply #0 const_10 <EOS>
-smart: <SOS> multiply n0 const_10 multiply #0 const_10 <EOS>
-target: <SOS> multiply n0 const_10 multiply #0 const_10 multiply #1 const_10 multiply #2 const_10 <EOS>
-
-problem: <SOS> what is the probability that a two digit number selected at random is a multiple of <NUM> and not a multiple of <NUM> ? <EOS>
-argmax: <SOS> multiply n1 const_2 multiply n1 #0 divide #1 n2 <EOS>
-smart: <SOS> divide n1 const_2 divide n0 n1 subtract const_1 #1 multiply #0 #2 <EOS>
-target: <SOS> multiply n1 const_2 multiply n0 const_2 multiply n0 n0 multiply n0 #0 multiply #0 #2 subtract #3 #1 divide #5 #4 <EOS>
-
-problem: <SOS> in the game of <UNK> , red chips , blue chips and green chips are each worth <NUM> , <NUM> and <NUM> points respectively . in a certain <UNK> of chips , the product of the point values of the chips is <NUM> . if the number of blue chips in this <UNK> doubles the number of green chips , how many red chips are in the <UNK> ? <EOS>
-argmax: <SOS> multiply n0 n2 multiply n0 n1 power #1 const_2 multiply #0 #2 <EOS>
-smart: <SOS> multiply n0 n2 multiply n0 n1 multiply n2 #0 multiply n3 #1 multiply #2 const_2 divide #4 #3 <EOS>
-target: <SOS> multiply n0 const_3 power n0 n1 power n0 const_3 power n2 const_3 multiply #1 #2 power const_2 #0 multiply #4 #3 multiply #5 #3 divide #6 #7 <EOS>
-
-problem: <SOS> if the average ( arithmetic mean ) of x and y is <NUM> , and z – x = <NUM> , what is the average of y and z ? <EOS>
-argmax: <SOS> multiply n1 const_2 multiply n0 const_2 subtract #0 #1 divide #2 const_2 <EOS>
-smart: <SOS> multiply n1 const_2 multiply n0 const_2 subtract #0 #1 <EOS>
-target: <SOS> multiply n1 const_2 multiply n0 const_2 subtract #0 #1 <EOS>
-
-problem: <SOS> the difference between two numbers is <NUM> . when the larger number is divided by the smaller one , the quotient is <NUM> and the remainder is <NUM> . the smaller number is <EOS>
-argmax: <SOS> subtract n0 n2 subtract n1 const_1 divide #0 #1 <EOS>
-smart: <SOS> subtract n0 n2 subtract n1 const_1 divide #0 #1 multiply #2 #0 add n1 #3 <EOS>
-target: <SOS> subtract n0 n2 subtract n1 const_1 divide #0 #1 <EOS>
-
-problem: <SOS> find the l . c . m of <NUM> , <NUM> , <NUM> and <NUM> . <EOS>
-argmax: <SOS> subtract n2 n0 <EOS>
-smart: <SOS> multiply n2 n3 multiply n1 #0 <EOS>
-target: <SOS> add const_1 const_4 divide n2 const_2 power const_2 const_3 power const_3 const_3 divide #1 const_2 power #0 const_2 divide #4 const_3 multiply #2 #5 divide #6 #0 multiply #7 #3 divide #8 #0 multiply #10 #9 <EOS>
-
-problem: <SOS> a rectangular <UNK> <UNK> is composed of <NUM> square tiles . the rectangular <UNK> will be <UNK> so that there will be <NUM> fewer <UNK> of tiles and <NUM> more rows of tiles . after the change in <UNK> , the <UNK> will still have <NUM> tiles , and it will still be rectangular . how many rows are in the tile <UNK> before the change in <UNK> ? <EOS>
-argmax: <SOS> multiply n0 n1 negate n2 power n2 n1 multiply n2 #0 add #3 #2 sqrt #4 add #1 #5 divide #6 n1 divide n0 #7 <EOS>
-smart: <SOS> multiply n0 n1 negate n2 power n2 n1 multiply n2 const_2 add #0 #3 subtract #4 #1 divide #5 #2 <EOS>
-target: <SOS> multiply n0 n1 negate n2 power n2 n1 multiply n2 #0 add #3 #2 sqrt #4 add #1 #5 divide #6 n1 divide n0 #7 <EOS>
-
-problem: <SOS> machine p and machine q are each used to manufacture <NUM> sprockets . it takes machine p <NUM> hours longer to produce <NUM> sprockets than machine q . machine q produces <NUM> % more sprockets per hour than machine a . how many sprockets per hour does machine a produce ? <EOS>
-argmax: <SOS> divide n1 const_100 multiply n0 n1 add #0 const_1 divide #1 #2 subtract n0 #3 divide #4 n0 <EOS>
-smart: <SOS> divide n1 const_100 add #0 const_1 divide n0 #1 subtract n0 #2 divide #3 n1 <EOS>
-target: <SOS> divide n1 const_100 add #0 const_1 divide n0 #1 subtract n0 #2 divide #3 n1 <EOS>
-
-problem: <SOS> <NUM> , <NUM> , x , - <NUM> , - <NUM> <EOS>
-argmax: <SOS> subtract n0 n1 divide #0 n9 <EOS>
-smart: <SOS> subtract n0 n1 <EOS>
-target: <SOS> negate n3 subtract n1 n2 subtract n0 n1 divide #1 #2 multiply #3 #1 subtract #0 #4 <EOS>
-
-argmax accuracy: 0.49
-smart accuracy: 0.46

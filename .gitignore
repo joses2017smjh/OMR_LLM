@@ -1,3 +1,5 @@
 wandb
 chkpts
+data
 trained_models
+submit.bash
