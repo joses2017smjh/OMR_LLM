@@ -68,6 +68,8 @@ if __name__ == '__main__':
     src_vocab_len = len(src_vocab)
     trg_vocab_len = len(trg_vocab)
 
+    print(src_vocab_len)
+
     # create dataloaders
     train_loader =DataLoader(train_set, batch_size=train_config['bs'], num_workers=4, shuffle=True, collate_fn=train_set.pad_collate, drop_last=True)
     validation_loader =DataLoader(validation_set, batch_size=train_config['bs'], num_workers=4, shuffle=True, collate_fn=train_set.pad_collate, drop_last=True)

@@ -54,6 +54,10 @@ class DecoderTransformer(nn.Module):
         # learned (or given) vector embeddings for source language
         if src_word_emb is not None:
             self.src_token_embedding = nn.Embedding.from_pretrained(src_word_emb)
+
+            # freeze embeddings besides custom tokens
+            self.src_token_embedding.weight.requires_grad_(True)
+            self.src_token_embedding.weight.data[5:].requires_grad_(False)
         else:
             self.src_token_embedding = nn.Embedding(num_embeddings=src_vocab_size, embedding_dim=embed_dim)
         

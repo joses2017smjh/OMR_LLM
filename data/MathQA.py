@@ -88,7 +88,7 @@ class GloVeVocab:
             return False
 
     def text2idx(self, text):
-        tokens = [str(x).strip().lower() if not self.is_number(str(x).replace(',', '')) else '<NUM>' for x in text]
+        tokens = [str(x).strip().lower() if not self.is_number(str(x).replace(',', '')) else '<NUM>' for x in text.split(' ')]
         return [self.word2idx[t] if t in self.word2idx.keys() else self.word2idx['<UNK>'] for t in tokens]
 
     def idx2text(self, idxs):
@@ -97,9 +97,10 @@ class GloVeVocab:
     def build_vocab(self, dim):
 
         # load glove dictionary
+        glove_vectors = GloVe(name='6B', dim=300)
         glove_weights = torch.load(f".vector_cache/glove.6B.{dim}d.txt.pt")
 
-        embeddings = torch.randn((4, dim))
+        embeddings = torch.randn((5, dim))
         embeddings = torch.cat((embeddings, glove_weights[2]), dim=0)
         
         # add custom tokens

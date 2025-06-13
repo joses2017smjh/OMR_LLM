@@ -4,7 +4,7 @@ from torcheval.metrics.functional import bleu_score
 from tqdm import tqdm
 import json
 
-from data.MathQA import MathQA
+from data.MathQA import MathQA, GloVeVocab
 from models.DecoderTransformer import DecoderTransformer
 
 
@@ -90,9 +90,11 @@ if __name__ == '__main__':
     # open and read JSON file
     with open('data/operations.json', 'r') as file:
         op_dict = json.load(file)
+    
+    src_vocab = GloVeVocab(dim=300)
 
     # load MathQA train dataset
-    train_set = MathQA(split='train')
+    train_set = MathQA(split='train', src_vocab=src_vocab)
 
     # get source and target vocabs
     src_vocab = train_set.src_vocab
@@ -112,7 +114,7 @@ if __name__ == '__main__':
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
 
     # get checkpoint of best model
-    chkpt_path = "./trained_models/decoder_transformer_2025_06_11_18_06_e29"
+    chkpt_path = "./chkpts/decoder_transformer_2025_06_12_22_06_e4"
     chkpt = torch.load(chkpt_path, weights_only=False, map_location=torch.device(device))
 
     # set model configuration
