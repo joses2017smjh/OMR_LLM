@@ -97,7 +97,6 @@ class GloVeVocab:
     def build_vocab(self, dim):
 
         # load glove dictionary
-        global_vectors = GloVe(name='6B', dim=dim)
         glove_weights = torch.load(f".vector_cache/glove.6B.{dim}d.txt.pt")
 
         embeddings = torch.randn((4, dim))
