@@ -13,6 +13,7 @@ class PositionalEncoding(nn.Module):
 
         self.embed_dim = embed_dim
 
+
     def forward(self, x):
 
         # batch size and sequence length bookkeeping
@@ -45,12 +46,18 @@ class DecoderTransformer(nn.Module):
             trg_vocab_size,
             embed_dim,
             num_layers,
-            num_heads
+            num_heads,
+            src_word_emb=None
     ):
         super().__init__()
 
-        # learned vector embeddings for source and target sequences
-        self.src_token_embedding = nn.Embedding(num_embeddings=src_vocab_size, embedding_dim=embed_dim)
+        # learned (or given) vector embeddings for source language
+        if src_word_emb is not None:
+            self.src_token_embedding = nn.Embedding.from_pretrained(src_word_emb)
+        else:
+            self.src_token_embedding = nn.Embedding(num_embeddings=src_vocab_size, embedding_dim=embed_dim)
+        
+        # learned vector embeddings for target language
         self.trg_token_embedding = nn.Embedding(num_embeddings=src_vocab_size, embedding_dim=embed_dim)
 
         # apply separate positional encodings

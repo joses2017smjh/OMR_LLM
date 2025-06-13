@@ -6,6 +6,8 @@ from collections import Counter
 from datasets import load_dataset, concatenate_datasets
 import spacy
 
+from torchtext.vocab import GloVe
+
 # heavily inspired by AI 539 Homework 4
 # math problem vocabulary
 class ProblemVocab:
@@ -67,6 +69,52 @@ class ProblemVocab:
         idx2word[4] = '<NUM>'
 
         return word2idx, idx2word
+
+
+# GloVe embedding vocab
+class GloVeVocab:
+    def __init__(self, dim):
+
+        self.word2idx, self.idx2word, self.embeddings = self.build_vocab(dim)
+
+    def __len__(self):
+        return len(self.word2idx)
+
+    def is_number(self, string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
+
+    def text2idx(self, text):
+        tokens = [str(x).strip().lower() if not self.is_number(str(x).replace(',', '')) else '<NUM>' for x in text]
+        return [self.word2idx[t] if t in self.word2idx.keys() else self.word2idx['<UNK>'] for t in tokens]
+
+    def idx2text(self, idxs):
+        return [self.idx2word[i] if i in self.idx2word.keys() else '<UNK>' for i in idxs]
+
+    def build_vocab(self, dim):
+
+        # load glove dictionary
+        global_vectors = GloVe(name='6B', dim=dim)
+        glove_weights = torch.load(f".vector_cache/glove.6B.{dim}d.txt.pt")
+
+        embeddings = torch.randn((4, dim))
+        embeddings = torch.cat((embeddings, glove_weights[2]), dim=0)
+        
+        # add custom tokens
+        word2idx = {word: vec + 5 for word, vec in glove_weights[1].items()}
+        word2idx['<PAD>'] = 0
+        word2idx['<SOS>'] = 1
+        word2idx['<EOS>'] = 2
+        word2idx['<UNK>'] = 3
+        word2idx['<NUM>'] = 4
+
+        idx2word = {vec: word for word, vec in word2idx.items()}
+
+        return word2idx, idx2word, embeddings
+
 
 # linear formula vocabulary
 class LinearFormulaVocab:

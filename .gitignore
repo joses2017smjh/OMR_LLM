@@ -3,3 +3,4 @@ chkpts
 data
 trained_models
 submit.bash
+.vector_cache

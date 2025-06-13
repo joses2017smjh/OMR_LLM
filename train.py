@@ -9,7 +9,7 @@ from tqdm import tqdm
 from datetime import datetime
 import random
 
-from data.MathQA import MathQA
+from data.MathQA import MathQA, GloVeVocab
 from models.DecoderTransformer import DecoderTransformer
 
 
@@ -23,9 +23,9 @@ train_config = {
 
 # model configuration
 model_config = {
-    'emb_dim': 256,
+    'emb_dim': 300,
     'num_layers': 8,
-    'num_heads': 8
+    'num_heads': 10
 }
 
 
@@ -52,8 +52,10 @@ if __name__ == '__main__':
     wandb.login()
     wandb.init(project="MathQA Decoder Transformer",name=run_name, config=train_config)
 
+    src_vocab = GloVeVocab(dim=300)
+
     # load MathQA train dataset
-    train_set = MathQA(split='train')
+    train_set = MathQA(split='train', src_vocab=src_vocab)
 
     # get source and target vocabs
     src_vocab = train_set.src_vocab
@@ -79,7 +81,8 @@ if __name__ == '__main__':
         trg_vocab_size=trg_vocab_len,
         embed_dim=model_config['emb_dim'],
         num_layers=model_config['num_layers'],
-        num_heads=model_config['num_heads']
+        num_heads=model_config['num_heads'],
+        src_word_emb=src_vocab.embeddings
     ).to(device)
 
     # run through dummy data
