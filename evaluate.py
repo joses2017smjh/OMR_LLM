@@ -111,7 +111,7 @@ def smart_sample(decoder, trg_vocab, op_dict, device, src_seq, max_ops):
     return curr_seq
 
 
-def compute_bleu(trg_vocab, pred_seq, trg_seq, n_gram=3):
+def compute_bleu(trg_vocab, pred_seq, trg_seq, n_gram=2):
 
     # clean up predicted and target sequences (strip <SOS>, <EOS>)
     pred_seq = pred_seq[1:-1]
@@ -184,8 +184,8 @@ if __name__ == '__main__':
     print("Model has: " + str(trainable_params) + " trainable parameters")
 
     # randomly sample problems from test dataset
-    num_samples = 10
-    sample_idx = torch.randperm(len(test_set))[:num_samples]
+    num_samples = len(validation_set)
+    sample_idx = torch.randperm(len(validation_set))[:num_samples]
 
     # keep track of accuracy
     correct_argmax = 0
@@ -197,14 +197,13 @@ if __name__ == '__main__':
 
     # keep track of GED
     ged_smart = 0
-    ged_argmax = 0
 
     # run through samples
     pbar = tqdm(total=num_samples, desc="Test Problems", unit="example")
     for idx in sample_idx:
 
         # get test source and target sequences
-        src_seq, trg_seq = test_set[idx]
+        src_seq, trg_seq = validation_set[idx]
         src_seq = src_seq.to(device)
         trg_seq = trg_seq.to(device)
 
@@ -223,13 +222,11 @@ if __name__ == '__main__':
         total_bleu_smart += compute_bleu(trg_vocab, pred_seq_smart, trg_seq)
 
         # convert to list of strings
-        pred_str_argmax = trg_vocab.idx2text(pred_seq_argmax[1:-1].to('cpu').numpy())
         pred_str_smart = trg_vocab.idx2text(pred_seq_smart[1:-1].to('cpu').numpy())
         trg_str = trg_vocab.idx2text(trg_seq[1:-1].to('cpu').numpy())
 
         # GED bookkeeping
         ged_smart += compute(trg_str, pred_str_smart)
-        ged_argmax += compute(trg_str, pred_str_argmax)
             
         pbar.update(1)
     
@@ -244,5 +241,4 @@ if __name__ == '__main__':
     print("smart average BLEU:\t" + str(total_bleu_smart/num_samples))
 
     # print GEDs
-    print("argmax average GED: " + str(ged_argmax/num_samples))
     print("smart average GED: " + str(ged_smart/num_samples))

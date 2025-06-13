@@ -2,9 +2,9 @@ import torch
 from torch import nn
 import math
 
+
 # get device
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
-
 
 class PositionalEncoding(nn.Module):
     def __init__(self, embed_dim):
@@ -34,6 +34,11 @@ class PositionalEncoding(nn.Module):
         # apply as residual
         x = x + pe
         return x
+
+class PALMTransformerLayer(nn.Transformer):
+
+    def __init__(self):
+        super().__init__()
 
 
 class PALM(nn.Module):
