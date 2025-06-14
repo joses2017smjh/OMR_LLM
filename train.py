@@ -46,7 +46,9 @@ def dry_run(model, device, src_vocab_len, trg_vocab_len):
 if __name__ == '__main__':
     
     now = datetime.now()
-    run_name = "decoder_transformer_" + now.strftime("%Y_%m_%d_%H_%m")
+    #run_name = "decoder_transformer_" + now.strftime("%Y_%m_%d_%H_%m")
+
+    run_name = "decoder_transformer_2025_06_12_23_06"
 
     # initialize wandb session
     wandb.login()
@@ -77,6 +79,9 @@ if __name__ == '__main__':
     # get device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
 
+    chkpt_path = "./chkpts/decoder_transformer_2025_06_12_23_06_e23"
+    chkpt = torch.load(chkpt_path, weights_only=False, map_location=torch.device(device))
+
     # create model
     model = DecoderTransformer(
         src_vocab_size=src_vocab_len,
@@ -86,6 +91,8 @@ if __name__ == '__main__':
         num_heads=model_config['num_heads'],
         src_word_emb=src_vocab.embeddings
     ).to(device)
+
+    model.load_state_dict(chkpt['model_state_dict'])
 
     # run through dummy data
     dry_run(model, device, src_vocab_len, trg_vocab_len)
@@ -105,15 +112,17 @@ if __name__ == '__main__':
     cosine = CosineAnnealingLR(optimizer, T_max=cooldown_epochs*epoch_len, eta_min=1e-6)
     scheduler = SequentialLR(optimizer, schedulers=[linear, cosine], milestones=[warmup_epochs*epoch_len])
 
+    scheduler.load_state_dict(chkpt['scheduler_state_dict'])
+
     # set up cross entropy loss for transformer output
     criterion = nn.CrossEntropyLoss(ignore_index=0)
 
     # set up progress bar
-    pbar = tqdm(total=train_config['max_epochs']*epoch_len, desc="Training Iterations", unit="batch")
+    pbar = tqdm(total=(train_config['max_epochs']-24)*epoch_len, desc="Training Iterations", unit="batch")
 
     # main training loop
-    iteration = 0
-    for epoch in range(train_config['max_epochs']):
+    iteration = 24*epoch_len
+    for epoch in range(train_config['max_epochs']-24):
 
         # set model to train
         model.train()

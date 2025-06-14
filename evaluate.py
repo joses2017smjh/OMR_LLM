@@ -4,7 +4,7 @@ from torcheval.metrics.functional import bleu_score
 from tqdm import tqdm
 import json
 
-from data.MathQA import MathQA
+from data.MathQA import MathQA, GloVeVocab, LinearFormulaVocab
 from models.DecoderTransformer import DecoderTransformer
 from graph_edit import compute
 
@@ -129,8 +129,11 @@ def compute_bleu(trg_vocab, pred_seq, trg_seq, n_gram=2):
     n_gram = n_gram if (pred_len >= n_gram and trg_len >= n_gram) else 1
 
     # compute BLEU score
-    score = bleu_score([pred_words], [trg_words], n_gram=n_gram)
-    return score.item()
+    try:
+        score = bleu_score([pred_words], [trg_words], n_gram=n_gram)
+        return score.item()
+    except:
+        return 0
 
 
 if __name__ == '__main__':
@@ -139,12 +142,15 @@ if __name__ == '__main__':
     with open('data/operations.json', 'r') as file:
         op_dict = json.load(file)
 
+    src_vocab = GloVeVocab(dim=300)
+    trg_vocab = LinearFormulaVocab()
+
     # load MathQA train dataset
-    train_set = MathQA(split='train')
+    train_set = MathQA(split='train', src_vocab=src_vocab)
 
     # get source and target vocabs
-    src_vocab = train_set.src_vocab
-    trg_vocab = train_set.trg_vocab
+    # src_vocab = train_set.src_vocab
+    # trg_vocab = train_set.trg_vocab
 
     # load MathQA test dataset
     test_set = MathQA(split='test', src_vocab=src_vocab)
@@ -160,7 +166,7 @@ if __name__ == '__main__':
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
 
     # get checkpoint of best model
-    chkpt_path = "./trained_models/decoder_transformer_2025_06_11_18_06_e29"
+    chkpt_path = "./trained_models/decoder_transformer_2025_06_13_00_06_e29"
     chkpt = torch.load(chkpt_path, weights_only=False, map_location=torch.device(device))
 
     # set model configuration
@@ -184,8 +190,8 @@ if __name__ == '__main__':
     print("Model has: " + str(trainable_params) + " trainable parameters")
 
     # randomly sample problems from test dataset
-    num_samples = len(validation_set)
-    sample_idx = torch.randperm(len(validation_set))[:num_samples]
+    num_samples = 100
+    sample_idx = torch.randperm(len(train_set))[:num_samples]
 
     # keep track of accuracy
     correct_argmax = 0
@@ -196,14 +202,14 @@ if __name__ == '__main__':
     total_bleu_smart  = 0.0
 
     # keep track of GED
-    ged_smart = 0
+    # ged_smart = 0
 
     # run through samples
     pbar = tqdm(total=num_samples, desc="Test Problems", unit="example")
     for idx in sample_idx:
 
         # get test source and target sequences
-        src_seq, trg_seq = validation_set[idx]
+        src_seq, trg_seq = train_set[idx]
         src_seq = src_seq.to(device)
         trg_seq = trg_seq.to(device)
 
@@ -226,7 +232,7 @@ if __name__ == '__main__':
         trg_str = trg_vocab.idx2text(trg_seq[1:-1].to('cpu').numpy())
 
         # GED bookkeeping
-        ged_smart += compute(trg_str, pred_str_smart)
+        # ged_smart += compute(trg_str, pred_str_smart)
             
         pbar.update(1)
     
@@ -241,4 +247,4 @@ if __name__ == '__main__':
     print("smart average BLEU:\t" + str(total_bleu_smart/num_samples))
 
     # print GEDs
-    print("smart average GED: " + str(ged_smart/num_samples))
+    # print("smart average GED: " + str(ged_smart/num_samples))

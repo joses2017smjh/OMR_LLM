@@ -4,7 +4,7 @@ from torcheval.metrics.functional import bleu_score
 from tqdm import tqdm
 import json
 
-from data.MathQA import MathQA, GloVeVocab
+from data.MathQA import MathQA, GloVeVocab, LinearFormulaVocab
 from models.DecoderTransformer import DecoderTransformer
 
 
@@ -92,19 +92,20 @@ if __name__ == '__main__':
         op_dict = json.load(file)
     
     src_vocab = GloVeVocab(dim=300)
+    trg_vocab = LinearFormulaVocab()
 
     # load MathQA train dataset
-    train_set = MathQA(split='train', src_vocab=src_vocab)
+    #train_set = MathQA(split='train', src_vocab=src_vocab)
 
     # get source and target vocabs
-    src_vocab = train_set.src_vocab
-    trg_vocab = train_set.trg_vocab
+    #src_vocab = train_set.src_vocab
+    #trg_vocab = train_set.trg_vocab
 
     # load MathQA test dataset
-    test_set = MathQA(split='test', src_vocab=src_vocab)
+    #test_set = MathQA(split='test', src_vocab=src_vocab)
 
     # load MathQA validation dataset
-    validation_set = MathQA(split='validation', src_vocab=src_vocab)
+    #validation_set = MathQA(split='validation', src_vocab=src_vocab)
 
     # get source and target vocab lengths
     src_vocab_len = len(src_vocab)
@@ -114,7 +115,7 @@ if __name__ == '__main__':
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('mps')
 
     # get checkpoint of best model
-    chkpt_path = "./chkpts/decoder_transformer_2025_06_12_22_06_e4"
+    chkpt_path = "./trained_models/decoder_transformer_2025_06_13_00_06_e29"
     chkpt = torch.load(chkpt_path, weights_only=False, map_location=torch.device(device))
 
     # set model configuration
@@ -137,26 +138,21 @@ if __name__ == '__main__':
     trainable_params = sum(p.numel() for p in decoder.parameters() if p.requires_grad)
     print("Model has: " + str(trainable_params) + " trainable parameters")
 
-    # randomly sample problems from test dataset
-    num_samples = 100
-    sample_idx = torch.randperm(len(test_set))[:num_samples]
+    while True:
 
-    # keep track of accuracy
-    correct_argmax = 0
-    correct_smart = 0
-    total_bleu_argmax = 0.0
-    total_bleu_smart  = 0.0
+        # ask user for input
+        user_input = input("Please enter your math word problem: ")
 
-    # ask user for input
-    user_input = input("Please enter your math word problem: ")
+        if user_input == "exit":
+            break
 
-    src_seq = torch.tensor(src_vocab.text2idx(user_input))
-    src_seq = src_seq.to(device)
+        src_seq = torch.tensor(src_vocab.text2idx(user_input))
+        src_seq = src_seq.to(device)
 
-    print(src_vocab.idx2text(src_seq.to('cpu').numpy()))
+        print(src_vocab.idx2text(src_seq.to('cpu').numpy()))
 
-    # autoregressive sampling (argmax vs smart)
-    pred_seq = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
+        # autoregressive sampling (argmax vs smart)
+        pred_seq = smart_sample(decoder=decoder, trg_vocab=trg_vocab, op_dict=op_dict, device=device, src_seq=src_seq, max_ops=100)
 
-    pred_str = " ".join(trg_vocab.idx2text(pred_seq.to('cpu').numpy()))
-    print(pred_str)
+        pred_str = " ".join(trg_vocab.idx2text(pred_seq.to('cpu').numpy()))
+        print(pred_str)
